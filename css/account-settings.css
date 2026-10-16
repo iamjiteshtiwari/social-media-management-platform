@@ -28,3 +28,8 @@
 :root[data-theme="dark"] .settings-layout .workspace-card { background: var(--color-surface); }
 
 :root[data-theme="dark"] .settings-form input { background: var(--color-page); color: var(--color-text); }
+
+
+.settings-actions { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.settings-actions > a:not(.button-secondary) { color: var(--color-primary); font-size: var(--font-size-small); font-weight: 700; text-align: center; text-decoration: none; }
+.settings-actions > a:not(.button-secondary):hover { text-decoration: underline; text-underline-offset: 0.2em; }
