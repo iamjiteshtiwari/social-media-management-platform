@@ -86,3 +86,22 @@
 :root[data-theme="dark"] .status-illustration { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .approval-step.is-complete > span { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .approval-step.is-pending > span { border-color: #29496f; background: #142a45; color: #c9defb; }
+
+
+/* Account lifecycle status preview components */
+.status-preview-list { display: grid; gap: 0.55rem; margin-block: var(--space-4); }
+.status-preview-option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; width: 100%; padding: 0.85rem; border: 1px solid var(--color-border); border-radius: var(--radius-medium); background: var(--color-page); color: var(--color-text); text-align: left; cursor: pointer; }
+.status-preview-option:hover, .status-preview-option[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.status-preview-option strong, .status-preview-option small { display: block; }
+.status-preview-option strong { font-size: var(--font-size-small); }
+.status-preview-option small { margin-top: 0.18rem; color: var(--color-text-subtle); font-size: 0.75rem; line-height: 1.45; }
+.status-preview-option > span:last-child { color: var(--color-primary); font-size: 1.15rem; }
+.status-preview-dot { width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--color-primary); }
+.status-preview-dot.is-pending { background: #2563eb; }
+.status-preview-dot.is-warning { background: #d97706; }
+.status-preview-dot.is-disabled { background: #64748b; }
+.status-preview-result { margin-top: var(--space-4); padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-medium); background: var(--color-surface); }
+.status-preview-result h2 { margin-bottom: var(--space-2); font-size: 1.15rem; letter-spacing: -0.02em; }
+.status-preview-result p:not(.eyebrow) { color: var(--color-text-muted); font-size: var(--font-size-small); }
+:root[data-theme="dark"] .status-preview-option { background: var(--color-page); }
+:root[data-theme="dark"] .status-preview-option:hover, :root[data-theme="dark"] .status-preview-option[aria-pressed="true"] { background: var(--color-primary-soft); }
