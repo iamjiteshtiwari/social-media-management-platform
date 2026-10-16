@@ -22,3 +22,7 @@
 .settings-row small { color:var(--color-text-subtle); font-size:.75rem; }
 .settings-signout { width:100%; margin-top:var(--space-4); }
 @media(max-width:760px) { .settings-layout { grid-template-columns:1fr; } }
+
+/* Theme-aware component surfaces. */
+
+:root[data-theme="dark"] .settings-layout .workspace-card { background: var(--color-surface); }
