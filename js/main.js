@@ -30,42 +30,28 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        menuButton.setAttribute("aria-expanded", "false");
-        menuButton.setAttribute("aria-label", "Open workspace menu");
-        workspaceNav.classList.remove("is-open");
-      }
-    });
-  }
-
-  const accountButton = document.querySelector(".account-button");
-  const accountNotice = document.querySelector("#account-notice");
-  const dismissNotice = document.querySelector(".notice-dismiss");
-
-  const closeAccountNotice = () => {
-    if (!accountButton || !accountNotice) return;
-    accountNotice.hidden = true;
-    accountButton.setAttribute("aria-expanded", "false");
-  };
-
-  if (accountButton && accountNotice) {
-    accountButton.addEventListener("click", () => {
-      const isOpen = accountButton.getAttribute("aria-expanded") === "true";
-      accountButton.setAttribute("aria-expanded", String(!isOpen));
-      accountNotice.hidden = isOpen;
-    });
-
-    if (dismissNotice) dismissNotice.addEventListener("click", closeAccountNotice);
+    const closeWorkspaceMenu = () => {
+      menuButton.setAttribute("aria-expanded", "false");
+      menuButton.setAttribute("aria-label", "Open workspace menu");
+      workspaceNav.classList.remove("is-open");
+    };
 
     document.addEventListener("click", (event) => {
-      if (!accountButton.contains(event.target) && !accountNotice.contains(event.target)) {
-        closeAccountNotice();
+      if (!workspaceNav.classList.contains("is-open")) return;
+      if (!menuButton.contains(event.target) && !workspaceNav.contains(event.target)) {
+        closeWorkspaceMenu();
       }
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeAccountNotice();
+      if (event.key === "Escape" && workspaceNav.classList.contains("is-open")) {
+        closeWorkspaceMenu();
+        menuButton.focus();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.matchMedia("(min-width: 761px)").matches) closeWorkspaceMenu();
     });
   }
 
