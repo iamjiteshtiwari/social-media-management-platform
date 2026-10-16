@@ -105,3 +105,5 @@
 .status-preview-result p:not(.eyebrow) { color: var(--color-text-muted); font-size: var(--font-size-small); }
 :root[data-theme="dark"] .status-preview-option { background: var(--color-page); }
 :root[data-theme="dark"] .status-preview-option:hover, :root[data-theme="dark"] .status-preview-option[aria-pressed="true"] { background: var(--color-primary-soft); }
+
+.auth-card--center.auth-card--wide { max-width: 42rem; }
