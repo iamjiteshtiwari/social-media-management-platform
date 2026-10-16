@@ -42,10 +42,31 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const monthHeading = document.querySelector("#calendar-month");
+  const calendarCells = document.querySelector("#calendar-cells");
   let displayedMonth = new Date(2026, 9, 1);
   const renderMonth = () => {
-    if (monthHeading) monthHeading.textContent = displayedMonth.toLocaleDateString("en-IN", {month:"long", year:"numeric"});
+    if (!monthHeading || !calendarCells) return;
+    monthHeading.textContent = displayedMonth.toLocaleDateString("en-IN", {month:"long", year:"numeric"});
+    const year = displayedMonth.getFullYear();
+    const month = displayedMonth.getMonth();
+    const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cellCount = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+    const html = [];
+    for (let i = 0; i < cellCount; i += 1) {
+      const date = new Date(year, month, i - firstWeekday + 1);
+      const inMonth = date.getMonth() === month;
+      const day = date.getDate();
+      const event = inMonth && year === 2026 && month === 9 && day === 8
+        ? '<small class="calendar-event">Draft preview</small>'
+        : inMonth && year === 2026 && month === 9 && day === 15
+          ? '<small class="calendar-event calendar-event--blue">Planned post</small>'
+          : "";
+      html.push('<div class="calendar-cell' + (inMonth ? '' : ' is-muted') + '"><span>' + day + '</span>' + event + '</div>');
+    }
+    calendarCells.innerHTML = html.join("");
   };
+  renderMonth();
   document.querySelectorAll("[data-calendar-shift]").forEach((button) => button.addEventListener("click", () => {
     displayedMonth = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + Number(button.dataset.calendarShift), 1);
     renderMonth();
@@ -54,19 +75,22 @@ document.addEventListener("DOMContentLoaded", () => {
   if (todayButton) todayButton.addEventListener("click", () => {
     displayedMonth = new Date();
     renderMonth();
-    announce("Calendar heading moved to the current month. Calendar entries are still sample content.");
+    announce("Calendar moved to the current month. Any visible entries are illustrative sample content.");
   });
   const search = document.querySelector("#media-search");
   const mediaType = document.querySelector("#media-type");
   const mediaItems = [...document.querySelectorAll(".media-library-item")];
   const filterMedia = () => {
     const term = (search?.value || "").trim().toLowerCase();
+    const type = mediaType?.value || "All files";
     mediaItems.forEach((item) => {
-      const matches = item.textContent.toLowerCase().includes(term);
-      item.hidden = !matches;
+      const matchesText = item.textContent.toLowerCase().includes(term);
+      const itemType = item.dataset.mediaType || "other";
+      const matchesType = type === "All files" || (type === "Images" && itemType === "image") || (type === "Videos" && itemType === "video") || (type === "Documents" && itemType === "document");
+      item.hidden = !(matchesText && matchesType);
     });
-    if (term) announce("Filtering the illustrative media items only. No media service is connected.");
+    if (search?.value || (mediaType && mediaType.value !== "All files")) announce("Filtered illustrative media items only. No media service is connected.");
   };
   if (search) search.addEventListener("input", filterMedia);
-  if (mediaType) mediaType.addEventListener("change", () => announce("File type filtering is a preview control; no real media records are loaded."));
+  if (mediaType) mediaType.addEventListener("change", filterMedia);
 });
