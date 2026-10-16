@@ -1,18 +1,22 @@
 function getPublicHealth_() {
+  const registrationEnabled =
+    getPrivateProperty_(AppConfig.PROPERTY.ENABLE_PUBLIC_REGISTRATION) === "YES";
   return {
     ok: true,
     service: "social-media-management-platform-api",
     apiVersion: AppConfig.API_VERSION,
-    status: "scaffold",
+    status: "source_scaffold",
     capabilities: {
       captchaVerificationModule: true,
-      sheetSchemaModule: true,
-      registration: false,
+      passwordHashingModule: true,
+      registrationRoute: registrationEnabled,
+      emailOtpRoute: registrationEnabled,
       login: false,
       sessions: false,
-      workspaceCrud: false,
+      accountAdministration: false,
+      socialIntegrations: false,
       publishing: false
     },
-    message: "Backend source scaffold only; protected operations are not enabled."
+    message: "Source modules are not proof of deployment or live readiness."
   };
 }
