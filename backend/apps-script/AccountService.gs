@@ -522,6 +522,8 @@ function resetPassword_(input) {
       password_hash_algorithm: hashed.algorithm,
       password_hash_iterations: hashed.iterations,
       password_changed_at: nowIso,
+      login_failed_count: 0,
+      login_locked_until: "",
       updated_at: nowIso
     });
     consumeChallenge_(challenges, latest.rowNumber, nowIso);
