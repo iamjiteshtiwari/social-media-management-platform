@@ -4,6 +4,12 @@
 
 This folder is a source-controlled, modular Google Apps Script backend foundation for the Social Media Management Platform. It is deliberately separate from the public frontend and from the personal portfolio repository.
 
+## Architecture decision: Google-only first
+
+**Decision:** Start with Google Apps Script + Google Sheets + Google Drive using the two existing Google accounts. Do not add Cloudflare Workers, Supabase, or another paid/new backend service now. Reconsider only if practical tests show a specific blocker that cannot be resolved safely within this setup. This is a staged decision, not a promise that Apps Script is suitable for every production requirement.
+
+The implementation must stay modular: API router, authentication, CAPTCHA, session handling, authorization, repositories, media storage, scheduling, and provider adapters remain separate modules. New services should be introduced behind interfaces/adapters rather than spreading service-specific code across the application.
+
 ## Target ownership model
 
 - **Personal Google account:** owns the master spreadsheet and Apps Script project; controls user registry, resource mapping, sessions, roles, audit metadata, and backend configuration.
