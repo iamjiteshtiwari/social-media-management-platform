@@ -54,6 +54,39 @@ document.addEventListener("DOMContentLoaded", () => {
       if (window.matchMedia("(min-width: 761px)").matches) closeWorkspaceMenu();
     });
   }
+  const accountButton = document.querySelector(".account-icon-link");
+  const accountPopover = document.querySelector("#account-options");
+
+  if (accountButton && accountPopover) {
+    const closeAccountPopover = (restoreFocus = false) => {
+      accountPopover.hidden = true;
+      accountButton.setAttribute("aria-expanded", "false");
+      if (restoreFocus) accountButton.focus();
+    };
+
+    accountButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      const shouldOpen = accountPopover.hidden;
+      accountPopover.hidden = !shouldOpen;
+      accountButton.setAttribute("aria-expanded", String(shouldOpen));
+    });
+
+    document.addEventListener("click", (event) => {
+      if (accountPopover.hidden) return;
+      if (!accountPopover.contains(event.target) && !accountButton.contains(event.target)) {
+        closeAccountPopover();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !accountPopover.hidden) closeAccountPopover(true);
+    });
+
+    accountPopover.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => closeAccountPopover());
+    });
+  }
+
   const destinationModal = document.querySelector("#destination-choice");
   const brandLink = document.querySelector(".site-brand");
 
