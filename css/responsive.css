@@ -3,7 +3,7 @@
     width: min(calc(100% - 1.25rem), var(--content-width));
   }
 
-  .header-inner { min-height: 3.75rem; }
+  .header-inner { min-height: 3.45rem; }
 
   .environment-label {
     max-width: 8rem;
