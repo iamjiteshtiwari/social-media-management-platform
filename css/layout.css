@@ -449,3 +449,26 @@
   .menu-toggle__label { display: none; }
   .account-avatar { width: 1.7rem; height: 1.7rem; }
 }
+
+.feature-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+  font-weight: 750;
+  text-decoration: none;
+}
+.feature-link:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+.account-notice a {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+  font-weight: 700;
+  text-decoration: none;
+}
+.account-notice a:hover { color: var(--color-primary-hover); text-decoration: underline; }
