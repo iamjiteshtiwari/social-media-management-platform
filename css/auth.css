@@ -135,3 +135,10 @@
 .button-danger:hover { background: #912018; }
 .button-danger:active { transform: translateY(1px); }
 .button-danger:disabled { border-color: var(--color-border); background: var(--color-surface-soft); color: var(--color-text-subtle); cursor: not-allowed; }
+
+
+/* Google reCAPTCHA v2 checkbox widget */
+.captcha-widget { display: block; min-width: 0; }
+.captcha-widget .g-recaptcha { max-width: 100%; margin-top: 0.75rem; overflow: hidden; }
+.captcha-widget .captcha-preview__status { margin-top: 0.65rem; }
+@media (max-width: 360px) { .captcha-widget .g-recaptcha { transform: scale(0.9); transform-origin: left top; margin-bottom: -0.4rem; } }
