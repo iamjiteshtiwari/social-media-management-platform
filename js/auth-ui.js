@@ -52,10 +52,19 @@ document.addEventListener("DOMContentLoaded", () => {
         confirm.focus();
         return;
       }
+      const captcha = form.querySelector("[data-captcha-purpose]");
+      const captchaResponse = form.querySelector('[name="g-recaptcha-response"]');
+      if (captcha && (!captchaResponse || !captchaResponse.value)) {
+        feedback.textContent = "Complete the CAPTCHA to continue this preview. Server-side verification is not connected, and no information will be sent or saved.";
+        feedback.classList.add("is-error");
+        return;
+      }
       if (otp) {
         feedback.textContent = "Design preview only: this code was not verified and no account status was changed.";
       } else if (confirm) {
-        feedback.textContent = "Design preview only: no account was created and no information was sent or saved.";
+        feedback.textContent = captcha
+          ? "Preview only: CAPTCHA was completed in the browser but not verified by the server. No account was created and no information was sent or saved."
+          : "Design preview only: no account was created and no information was sent or saved.";
       } else if (form.querySelector("#recovery-email")) {
         feedback.textContent = "Design preview only: no recovery email was sent and no account was checked.";
       } else {
