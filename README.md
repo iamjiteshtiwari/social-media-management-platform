@@ -22,6 +22,10 @@ A custom, mobile-first social media management platform prototype built with ori
 - `notifications.html` — local-only notification filters and read-state interactions
 - `admin-approvals.html` — administrator approval queue concept
 
+## Theme support
+
+All pages include a light/dark theme toggle. The first visit follows the device theme; manual selection is stored in browser local storage and is shared across pages in this browser. The matching light/dark favicon and mobile browser theme color are updated with the selected theme. Theme preference is frontend-only and is not synced across browsers or accounts.
+
 ## Quality assurance status
 
 The page inventory exists, but full browser and device QA is not yet verified. See [the visual prototype checklist](docs/visual-prototype-checklist.md) for remaining mobile, tablet, desktop, accessibility, navigation and interaction checks.
