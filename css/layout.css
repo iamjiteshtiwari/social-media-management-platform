@@ -600,3 +600,15 @@ body.modal-open {
 @media (prefers-reduced-motion: reduce) {
   .theme-toggle { transition: none; }
 }
+
+/* Maintain button contrast in dark mode. */
+
+:root[data-theme="dark"] .button-primary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+:root[data-theme="dark"] .button-primary:hover { border-color: #1d4ed8; background: #1d4ed8; }
+:root[data-theme="dark"] .form-feedback.is-error { color: #ffb4bd; }
+:root[data-theme="dark"] .filter-tab { color: var(--color-text-muted); }
+:root[data-theme="dark"] .filter-tab.is-active { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-text); }
