@@ -55,6 +55,16 @@ function runBackendSelfTests() {
     });
   });
 
+  check("account schema supports login throttling and OTP challenges", function () {
+    const schema = getMasterSchema_();
+    return schema.Users.indexOf("login_failed_count") >= 0 &&
+      schema.Users.indexOf("login_locked_until") >= 0 &&
+      Array.isArray(schema.AuthChallenges) &&
+      ["challenge_id", "user_id", "verifier_hash", "expires_at", "attempt_count", "consumed_at"].every(function (name) {
+        return schema.AuthChallenges.indexOf(name) >= 0;
+      });
+  });
+
   check("PBKDF2-HMAC-SHA-256 matches the standard one-iteration vector", function () {
     const bytes = pbkdf2Sha256_("password", "salt", 1, 32);
     const hex = bytes.map(function (value) {
