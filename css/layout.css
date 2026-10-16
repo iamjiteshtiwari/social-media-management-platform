@@ -167,10 +167,195 @@
 .footer-inner span { color: inherit; }
 
 
-/* Main-site-inspired footer, adapted for this app's smaller workspace shell. */
+
+/* Compact app header: main-site identity, app-specific navigation. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--color-border);
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(12px);
+}
+
+.header-inner {
+  position: relative;
+  display: flex;
+  min-height: 3.75rem;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.site-brand { flex: 0 0 auto; font-size: 1.02rem; }
+
+.workspace-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  margin-inline: auto;
+}
+
+.workspace-nav a {
+  display: inline-flex;
+  min-height: 2.45rem;
+  align-items: center;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-small);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.workspace-nav a:hover,
+.workspace-nav a[aria-current="page"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+.header-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.environment-label {
+  color: var(--color-text-subtle);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-button {
+  display: inline-flex;
+  min-height: 2.45rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.55rem 0.25rem 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-page);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.account-button:hover,
+.account-button[aria-expanded="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.account-avatar {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.account-chevron { color: var(--color-text-subtle); }
+
+.account-notice {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.65rem);
+  right: 0;
+  width: min(19rem, calc(100vw - 2rem));
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-page);
+  box-shadow: var(--shadow-panel);
+}
+
+.account-notice[hidden] { display: none; }
+.account-notice strong { display: block; margin-bottom: var(--space-2); }
+.account-notice p { margin-bottom: var(--space-3); font-size: var(--font-size-small); }
+
+.notice-dismiss {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.menu-toggle {
+  display: none;
+  min-height: 2.45rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-page);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.menu-toggle:hover,
+.menu-toggle[aria-expanded="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.menu-toggle__icon {
+  display: grid;
+  gap: 3px;
+  width: 1rem;
+}
+
+.menu-toggle__icon span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.page-main { padding-block: var(--space-6); }
+
+.intro-panel {
+  padding: clamp(1.35rem, 4vw, 2.7rem);
+  border-left: 3px solid var(--color-brand);
+  border-radius: var(--radius-medium);
+}
+
+.intro-panel h1 { max-width: 18ch; }
+
+.feature-card {
+  border-radius: var(--radius-medium);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .feature-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-panel);
+    transform: translateY(-2px);
+  }
+}
+
+/* The app uses only the main site's lower-footer pattern. */
 .site-footer {
   position: relative;
-  margin-top: var(--space-7);
+  margin-top: var(--space-6);
   overflow: hidden;
   border-top: 1px solid var(--color-border);
   background:
@@ -186,64 +371,31 @@
   background: linear-gradient(90deg, var(--color-brand), var(--color-primary), transparent);
 }
 
-.footer-main {
+.footer-bottom {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: var(--space-6);
-  padding-block: var(--space-6);
-}
-
-.footer-identity {
-  display: grid;
-  align-content: start;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
-}
-
-.footer-identity > p:not(.footer-note) {
-  max-width: 32rem;
-  margin: 0;
-  color: var(--color-text);
-}
-
-.footer-note {
-  max-width: 34rem;
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--color-brand);
-  background: rgb(255 255 255 / 55%);
+  min-height: 3.6rem;
+  padding-block: var(--space-3);
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
 }
 
-.footer-nav {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: start;
-  gap: var(--space-5);
-}
+.footer-bottom p { margin: 0; }
 
-.footer-nav > div {
-  display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: var(--space-2);
-}
-
-.site-footer h2 {
-  margin: 0 0 var(--space-2);
-  color: var(--color-text);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-small);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .site-footer a {
-  width: fit-content;
   color: var(--color-text);
+  font-weight: 650;
   text-decoration-color: transparent;
   text-underline-offset: 0.2em;
 }
@@ -253,34 +405,47 @@
   text-decoration-color: currentColor;
 }
 
-.footer-bottom {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-block: var(--space-3);
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+.footer-more { margin-left: auto; }
+
+@media (max-width: 960px) {
+  .header-inner { gap: var(--space-3); }
+  .environment-label { display: none; }
+  .workspace-nav a { padding-inline: 0.5rem; font-size: 0.82rem; }
 }
 
-.footer-bottom p { margin: 0; }
-.footer-bottom a { font-weight: 700; }
-
-@media (max-width: 700px) {
-  .header-inner { min-height: 3.25rem; }
-  .site-brand { font-size: 1rem; }
-  .footer-main {
-    grid-template-columns: 1fr;
-    gap: var(--space-5);
-    padding-block: var(--space-5);
-  }
-  .footer-nav { gap: var(--space-4); }
-  .footer-bottom {
-    align-items: flex-start;
+@media (max-width: 760px) {
+  .header-inner { min-height: 3.45rem; gap: var(--space-3); }
+  .site-brand { font-size: 0.96rem; }
+  .menu-toggle { display: inline-flex; }
+  .workspace-nav {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    left: 0;
+    right: 0;
+    display: none;
+    align-items: stretch;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: 0.15rem;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+    background: var(--color-page);
+    box-shadow: var(--shadow-panel);
   }
+  .workspace-nav.is-open { display: flex; }
+  .workspace-nav a { min-height: 2.75rem; padding-inline: var(--space-3); font-size: 0.9rem; }
+  .header-actions { gap: 0; }
+  .account-button { min-height: 2.35rem; padding-right: 0.35rem; }
+  .account-button__label,
+  .account-chevron { display: none; }
+  .footer-bottom { justify-content: flex-start; gap: var(--space-2) var(--space-4); }
+  .footer-links { gap: var(--space-3); }
+  .footer-more { margin-left: 0; }
+}
+
+@media (max-width: 380px) {
+  .site-brand { font-size: 0.88rem; gap: 0.25rem; }
+  .menu-toggle { padding-inline: 0.45rem; }
+  .menu-toggle__label { display: none; }
+  .account-avatar { width: 1.7rem; height: 1.7rem; }
 }
