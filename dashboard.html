@@ -18,8 +18,15 @@
     <button class="menu-toggle" type="button" aria-label="Open workspace menu" aria-expanded="false" aria-controls="dashboard-navigation"><span class="menu-toggle__icon" aria-hidden="true"><span></span><span></span><span></span></span><span class="menu-toggle__label">Menu</span></button>
     <a class="site-brand" href="#destination-choice" aria-label="Choose where to go" aria-haspopup="dialog" aria-controls="destination-choice"><span class="site-brand__code" aria-hidden="true">&lt;/&gt;</span><span class="site-brand__text"><span class="site-brand__prefix">iam</span><span class="site-brand__name">jitesh</span><span class="site-brand__suffix">tiwari</span></span></a>
     <nav class="workspace-nav" id="dashboard-navigation" aria-label="Workspace navigation"><a href="dashboard.html" aria-current="page">Dashboard</a><a href="brand-management.html">Brands &amp; accounts</a><a href="content-planner.html">Content planner</a><a href="media-library.html">Media library</a><a href="#reports">Reports</a></nav>
-    <div class="header-actions"><a class="account-icon-link" href="account-settings.html" aria-label="Account settings preview" title="Account settings preview"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19.25c.7-3.15 3.2-5 6.5-5s5.8 1.85 6.5 5"></path></svg></a></div>
+    <div class="header-actions"><a class="account-icon-link" href="#account-options" aria-label="Open account options" title="Account options" aria-haspopup="true" aria-expanded="false" aria-controls="account-options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19.25c.7-3.15 3.2-5 6.5-5s5.8 1.85 6.5 5"></path></svg></a></div>
   </div></header>
+
+  <div class="account-popover" id="account-options" hidden>
+    <p class="account-popover__heading">Your account</p>
+    <a href="login.html"><span class="account-popover__icon" aria-hidden="true">↪</span><span><strong>Sign in</strong><small>Access your workspace</small></span></a>
+    <a href="register.html"><span class="account-popover__icon" aria-hidden="true">＋</span><span><strong>Create account</strong><small>Set up your workspace</small></span></a>
+    <a href="account-settings.html"><span class="account-popover__icon" aria-hidden="true">⚙</span><span><strong>Account settings</strong><small>Preview account preferences</small></span></a>
+  </div>
   <main id="main-content" class="container dashboard-main">
     <section class="dashboard-welcome"><div><p class="eyebrow">Workspace overview</p><h1>Good day. Let’s get organized.</h1><p>Your social content workspace at a glance.</p></div><a class="button-primary button-link" href="register.html">Create account <span aria-hidden="true">→</span></a></section>
     <div class="preview-banner"><span class="preview-banner__icon" aria-hidden="true">i</span><p><strong>Design preview</strong> — sample figures and content below are illustrative only. No social accounts are connected and no publishing actions are active.</p></div>
