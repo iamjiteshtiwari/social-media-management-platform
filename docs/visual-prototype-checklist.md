@@ -16,6 +16,7 @@ All listed pages were reviewed at source level for their intended preview behavi
 - [x] Publishing queue, media library, analytics and notifications
 - [x] Administrator approval queue concept
 - [x] Shared header, account popup, logo destination popup and footer
+- [x] Light/dark theme toggle across all 17 pages, saved browser preference, system-theme default, dark-mode component surfaces, theme-color metadata and matching light/dark favicon variants
 
 ## QA fixes to address
 
@@ -25,7 +26,7 @@ All listed pages were reviewed at source level for their intended preview behavi
 - [x] Review registration, sign-in, password recovery and OTP client-side validation/feedback; actions remain preview-only.
 - [x] Review future date/time validation and calendar month navigation; reporting-period selection now updates illustrative chart labels and status feedback.
 - [x] Review queue and notification filters/search, read states, media filters and approval sample actions; repaired a syntax error that prevented the shared queue/notification/approval script from running.
-- [ ] Verify mobile, tablet and desktop layouts; horizontal table scrolling; long text; chart and calendar overflow.
+- [ ] Verify mobile, tablet and desktop layouts; horizontal table scrolling; long text; chart and calendar overflow, including both light and dark themes.
 - [x] Source-check duplicate IDs, local links and anchor targets; add a keyboard focus loop to the logo destination dialog.
 - [ ] Run JavaScript syntax checks and browser-console checks in a real browser; source review alone is not a substitute.
 - [ ] Inspect the deployed app in a working browser on desktop, tablet and mobile before claiming browser QA or deployment verification.
