@@ -100,9 +100,16 @@
         <a href="#media-library">Media library</a>
       </nav>
 
-      <div class="header-actions"><a class="account-icon-link" href="account-settings.html" aria-label="Account settings preview" title="Account settings preview"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19.25c.7-3.15 3.2-5 6.5-5s5.8 1.85 6.5 5"></path></svg></a></div>
+      <div class="header-actions"><a class="account-icon-link" href="#account-options" aria-label="Open account options" title="Account options" aria-haspopup="true" aria-expanded="false" aria-controls="account-options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19.25c.7-3.15 3.2-5 6.5-5s5.8 1.85 6.5 5"></path></svg></a></div>
     </div>
   </header>
+
+  <div class="account-popover" id="account-options" hidden>
+    <p class="account-popover__heading">Your account</p>
+    <a href="login.html"><span class="account-popover__icon" aria-hidden="true">↪</span><span><strong>Sign in</strong><small>Access your workspace</small></span></a>
+    <a href="register.html"><span class="account-popover__icon" aria-hidden="true">＋</span><span><strong>Create account</strong><small>Set up your workspace</small></span></a>
+    <a href="account-settings.html"><span class="account-popover__icon" aria-hidden="true">⚙</span><span><strong>Account settings</strong><small>Preview account preferences</small></span></a>
+  </div>
   <main id="main-content" class="container page-main">
     <section class="intro-panel" aria-labelledby="page-title">
       <p class="eyebrow">Project foundation</p>
