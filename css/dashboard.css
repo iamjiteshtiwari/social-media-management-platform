@@ -44,3 +44,11 @@
 @media (max-width: 900px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .dashboard-main { padding-block: var(--space-5); } .dashboard-welcome { align-items: flex-start; flex-direction: column; } .dashboard-grid { grid-template-columns: 1fr; } .dashboard-panel--wide { grid-column: auto; } .dashboard-panel { padding: var(--space-4); } }
 @media (max-width: 420px) { .metric-grid { gap: var(--space-2); } .metric-card { padding: var(--space-3); } .metric-card > strong { font-size: 1.6rem; } .metric-label { font-size: 0.75rem; } .metric-icon { top: var(--space-2); right: var(--space-2); width: 1.6rem; height: 1.6rem; } .preview-banner { padding: var(--space-3); } }
+
+/* Theme-aware component surfaces. */
+
+:root[data-theme="dark"] .preview-banner { border-color: #29496f; background: #142a45; color: #c9defb; }
+:root[data-theme="dark"] .metric-card,
+:root[data-theme="dark"] .dashboard-panel { background: var(--color-surface); }
+:root[data-theme="dark"] .planner-preview { background: var(--color-page); }
+:root[data-theme="dark"] .activity-bars { background: linear-gradient(180deg, transparent, #142238); }
