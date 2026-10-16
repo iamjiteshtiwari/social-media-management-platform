@@ -18,18 +18,22 @@ function validateSession_(token) {
   if(typeof token!=="string"||token.length<50||token.length>100)return null;
   const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Sessions"); if(sheet.getLastRow()<2)return null;
   const rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues(),secret=getRequiredPrivateProperty_("SESSION_HMAC_SECRET"),now=Date.now();
-  for(let i=rows.length-1;i>=0;i--){const r=rowToRecord_(sheet,rows[i]);if(r.revoked_at||!r.session_id||now>=Date.parse(r.expires_at))continue;const expected=String(r.credential_verifier||""),actual=hmacBase64_(secret,r.session_id+"|"+token);if(!constantTimeStringEqual_(actual,expected))continue;const user=getUserById_(String(r.user_id));return canAccountAuthenticate_(user)?{session_id:String(r.session_id),user:user,expires_at:r.expires_at}:null;}
+  for(let i=rows.length-1;i>=0;i--){const r=rowToRecord_(sheet,{values:rows[i]});if(r.revoked_at||!r.session_id||now>=Date.parse(r.expires_at))continue;const expected=String(r.credential_verifier||""),actual=hmacBase64_(secret,r.session_id+"|"+token);if(!constantTimeStringEqual_(actual,expected))continue;const user=getUserById_(String(r.user_id));if(!canAccountAuthenticate_(user))return null;const userSheet=getRequiredSheet_(getMasterSpreadsheet_(),"Users"),userMatch=findRecordByValue_(userSheet,"user_id",String(r.user_id));return userMatch?{session_id:String(r.session_id),user:user,userRowNumber:userMatch.rowNumber,expires_at:r.expires_at}:null;}
   return null;
 }
 function revokeSession_(token,reason) {
   if(typeof token!=="string"||!token)return false;
   const lock=LockService.getScriptLock();lock.waitLock(20000);
   try{const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Sessions");if(sheet.getLastRow()<2)return false;const headers=getHeaderMap_(sheet),rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues(),secret=getRequiredPrivateProperty_("SESSION_HMAC_SECRET");
-    for(let i=rows.length-1;i>=0;i--){const r=rowToRecord_(sheet,rows[i]);if(r.revoked_at||!r.session_id)continue;if(!constantTimeStringEqual_(hmacBase64_(secret,r.session_id+"|"+token),String(r.credential_verifier||"")))continue;setCellIfColumnExists_(sheet,i+2,headers,"revoked_at",new Date().toISOString());setCellIfColumnExists_(sheet,i+2,headers,"revoke_reason",String(reason||"logout").slice(0,80));appendAuditEvent_({user_id:String(r.user_id),action:"session_revoked",outcome:"success",details:{reason:String(reason||"logout")}});return true;}return false;
+    for(let i=rows.length-1;i>=0;i--){const r=rowToRecord_(sheet,{values:rows[i]});if(r.revoked_at||!r.session_id)continue;if(!constantTimeStringEqual_(hmacBase64_(secret,r.session_id+"|"+token),String(r.credential_verifier||"")))continue;setCellIfColumnExists_(sheet,i+2,headers,"revoked_at",new Date().toISOString());setCellIfColumnExists_(sheet,i+2,headers,"revoke_reason",String(reason||"logout").slice(0,80));appendAuditEvent_({user_id:String(r.user_id),action:"session_revoked",outcome:"success",details:{reason:String(reason||"logout")}});return true;}return false;
   }finally{lock.releaseLock();}
 }
 function revokeUserSessions_(userId,reason) {
   const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Sessions");if(sheet.getLastRow()<2)return 0;const headers=getHeaderMap_(sheet),rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues(),now=new Date().toISOString();let count=0;
-  rows.forEach(function(values,index){const r=rowToRecord_(sheet,values);if(String(r.user_id)!==String(userId)||r.revoked_at)return;setCellIfColumnExists_(sheet,index+2,headers,"revoked_at",now);setCellIfColumnExists_(sheet,index+2,headers,"revoke_reason",String(reason||"revoked").slice(0,80));count++;});return count;
+  rows.forEach(function(values,index){const r=rowToRecord_(sheet,{values:values});if(String(r.user_id)!==String(userId)||r.revoked_at)return;setCellIfColumnExists_(sheet,index+2,headers,"revoked_at",now);setCellIfColumnExists_(sheet,index+2,headers,"revoke_reason",String(reason||"revoked").slice(0,80));count++;});return count;
 }
 function getUserById_(userId){const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Users"),found=findRecordByValue_(sheet,"user_id",String(userId));return found?rowToRecord_(sheet,found.values):null;}
+
+function hmacBase64_(secret,message){return Utilities.base64Encode(Utilities.computeHmacSha256Signature(String(message),String(secret)));}
+function validateSessionToken_(token){return validateSession_(token);}
+function revokeSessionsForUser_(userId,reason,occurredAt){return revokeUserSessions_(userId,reason);}
