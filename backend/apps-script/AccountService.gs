@@ -277,7 +277,7 @@ function normalizeRegistrationInput_(input) {
 
 function normalizeEmail_(email) {
   const value = String(email || "").trim().toLowerCase();
-  return value.length <= 254 && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value) ? value : "";
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : "";
 }
 
 function findLatestChallenge_(sheet, userId, challengeType) {
