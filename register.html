@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light"><meta name="theme-color" content="#ffffff">
+  <meta name="author" content="Jitesh Tiwari">
+  <meta name="description" content="Create-account page design for the Social Media Management Platform by Jitesh Tiwari.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Create account | Social Media Management Platform</title>
+  <link rel="icon" href="https://iamjiteshtiwari.in/assets/favicon/Jitesh%20Tiwari%20(iamjiteshtiwari.in)%20Favicon%2032x32%20-%20Light.png" sizes="32x32">
+  <link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/layout.css"><link rel="stylesheet" href="css/auth.css">
+  <script src="js/auth-ui.js" defer></script>
+</head>
+<body class="auth-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header"><div class="container header-inner">
+    <a class="site-brand" href="index.html" aria-label="Social platform home"><span class="site-brand__code" aria-hidden="true">&lt;/&gt;</span><span class="site-brand__text"><span class="site-brand__prefix">iam</span><span class="site-brand__name">jitesh</span><span class="site-brand__suffix">tiwari</span></span></a>
+    <a class="auth-header-link" href="login.html">Already have an account? <strong>Sign in</strong></a>
+  </div></header>
+  <main id="main-content" class="container auth-layout auth-layout--register">
+    <section class="auth-story">
+      <p class="eyebrow">Start organized</p>
+      <h1>Your content workflow, all in one place.</h1>
+      <p>Create your workspace profile first. Account verification and admin approval will be part of the real integration stage.</p>
+      <div class="step-list"><div><span>01</span><p><strong>Create your profile</strong><br>Share your basic account details.</p></div><div><span>02</span><p><strong>Verify your email</strong><br>A planned email code step confirms ownership.</p></div><div><span>03</span><p><strong>Wait for approval</strong><br>Workspace access opens after approval.</p></div></div>
+      <p class="auth-small-note">This page is a design prototype and does not create or store an account.</p>
+    </section>
+    <section class="auth-card auth-card--wide" aria-labelledby="create-account-title">
+      <div class="auth-card-heading"><span class="auth-mark" aria-hidden="true">&lt;/&gt;</span><p class="eyebrow">New workspace member</p><h2 id="create-account-title">Create your account</h2><p>Start with your basic details. All fields are required.</p></div>
+      <form class="auth-form" data-demo-form>
+        <div class="form-grid">
+          <div class="form-field"><label for="register-name">Full name</label><input id="register-name" name="full_name" autocomplete="name" placeholder="Your full name" required></div>
+          <div class="form-field"><label for="register-username">Username</label><input id="register-username" name="username" autocomplete="username" placeholder="Choose a username" minlength="3" required><small>At least 3 characters.</small></div>
+          <div class="form-field form-field--full"><label for="register-email">Email address</label><input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+          <div class="form-field form-field--full"><label for="register-phone">Phone number</label><input id="register-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Your contact number" required></div>
+          <div class="form-field"><label for="register-password">Create password</label><div class="password-field"><input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required><button type="button" class="password-toggle" data-password-toggle="register-password" aria-label="Show password">Show</button></div></div>
+          <div class="form-field"><label for="register-confirm">Confirm password</label><input id="register-confirm" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Enter it again" required></div>
+        </div>
+        <label class="checkbox-label terms-check"><input type="checkbox" name="terms" required> I understand this is a preview and account creation is not active yet.</label>
+        <button class="button-primary" type="submit">Continue to email verification <span aria-hidden="true">→</span></button>
+        <p class="form-feedback" role="status" aria-live="polite"></p>
+      </form>
+      <p class="auth-switch">Already registered? <a href="login.html">Sign in</a></p>
+    </section>
+  </main>
+  <footer class="auth-footer"><div class="container footer-bottom"><p>© <span data-current-year>2026</span> Jitesh Tiwari</p><nav class="footer-links" aria-label="Footer links"><a href="https://github.com/iamjiteshtiwari">GitHub</a><a href="https://iamjiteshtiwari.in/contact/">Contact</a><a href="https://iamjiteshtiwari.in/">Main website</a></nav></div></footer>
+</body></html>
