@@ -18,5 +18,9 @@ The following static pages are part of the design review stage:
 - `media-library.html` — media library
 - `post-editor.html` — composer and local-only post preview
 - `account-settings.html` — profile and security settings preview
+- `social-accounts.html` — social network integration options preview
+- `publishing-queue.html` — draft, scheduled, published and attention-needed posts
+- `analytics.html` — sample performance and platform reporting
+- `notifications.html` — local-only notification filters and read-state interactions
 
-All account, calendar and media actions are prototypes only. They do not transmit or persist form data, send email, authenticate a user, upload files, connect a social account, or publish content. Real integration begins only after visual review. The main portfolio repository is separate and must not be modified.
+All account, calendar, queue, analytics, notifications and media actions are visual prototypes only. They do not transmit or persist form data, send email, authenticate a user, upload files, connect a social account, or publish content. Real integration begins only after visual review. The main portfolio repository is separate and must not be modified.
