@@ -24,7 +24,8 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `Config.gs`: server-side Script Properties access.
 - `PasswordService.gs`: server-side PBKDF2-HMAC-SHA-256 password hashing and verification.
 - `AccountService.gs`: registration validation, server-side CAPTCHA gate, latest-only email OTP, resend cooldown, attempt/expiry enforcement, email verification, and pending-approval transition.
-- `SessionService.gs`: planned next module for the fixed nine-hour, single-active-session lifecycle; public browser transport remains gated.
+- `SessionService.gs`: fixed nine-hour absolute session expiry, one active session per user, verifier-only session storage, logout and revocation helpers.
+- `AccountAdminService.gs`: pending-account approval, suspend/disable/reactivate controls, session revocation and owner-requested account deletion with profile anonymization.
 - `CaptchaService.gs`: server-side Google reCAPTCHA verification for registration/login.
 - `Schema.gs`: versioned master and operational sheet column definitions.
 - `SheetRepository.gs`: spreadsheet access and safe header/record helpers.
@@ -41,7 +42,9 @@ Set these only in the private Apps Script project under the personal account. Ne
 - `APP_ALLOWED_HOSTNAME` = `social.iamjiteshtiwari.in`
 - `MASTER_SPREADSHEET_ID` = ID of the personal-account master spreadsheet
 - `OTP_HMAC_SECRET` = long random private value used to protect low-entropy OTP verifiers
+- `ENABLE_PUBLIC_REGISTRATION` = leave unset until the owner explicitly enables public registration after private configuration and transport checks
 - `SESSION_HMAC_SECRET` = long random private value used to protect session credential verifiers
+- `ENABLE_PUBLIC_LOGIN` = reserved feature gate; login remains unavailable through the public API until secure session transport is selected
 - `OPERATIONAL_TEST_SPREADSHEET_ID` = ID of the disposable work-owned operational test spreadsheet shared with the personal account
 - `RECAPTCHA_REGISTRATION_SECRET` = **rotated replacement secret**, entered directly in Apps Script
 - `RECAPTCHA_LOGIN_SECRET` = **rotated replacement secret**, entered directly in Apps Script if login has its own secret
@@ -96,4 +99,4 @@ Before connecting registration/login, demonstrate a supported, secure transport 
 
 ## Current implementation boundary
 
-The source now includes configuration access, CAPTCHA verification, versioned schemas, repository helpers, server-side password hashing, and registration/email-OTP workflow code. The new account modules are source-only and have not been run in the live Apps Script environment. No Google resources have been created or changed, no email has been sent, and no web app has been deployed. Session creation, login routing, logout, admin lifecycle actions, and frontend transport are the next account-phase work; social integrations and post structure remain later phases. Those require explicit setup, credentials, and tests.
+The source now includes configuration access, CAPTCHA verification, versioned schemas, repository helpers, PBKDF2-HMAC-SHA-256 password hashing, registration/email-OTP workflow code, fixed-lifetime session helpers, and account approval/suspension/disable/deletion helpers. These modules are source-only and have not been run in the live Apps Script environment. No Google resources have been created or changed, no email has been sent, and no web app has been deployed. Public registration/OTP routes are gated by `ENABLE_PUBLIC_REGISTRATION=YES`; login/logout/session routes deliberately remain disabled until secure browser transport is resolved. Frontend integration and live runtime verification remain part of Phase 1; social integrations and post structure remain later phases. Those require explicit setup, credentials, and tests.
