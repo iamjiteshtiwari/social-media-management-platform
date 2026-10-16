@@ -4,8 +4,12 @@
 }
 
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   border-bottom: 1px solid var(--color-border);
-  background: rgb(255 255 255 / 88%);
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(10px);
 }
 
 .header-inner,
@@ -18,25 +22,42 @@
 
 .header-inner { min-height: 4.25rem; }
 
-.brand {
+.site-brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 0.35rem;
+  color: var(--color-text);
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
   text-decoration: none;
-  font-weight: 750;
-  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
-.brand-mark {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border-radius: var(--radius-small);
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
+.site-brand__code {
+  color: var(--color-brand);
+  font-family: var(--font-mono);
+  font-size: 1.02em;
   font-weight: 800;
+  letter-spacing: -0.12em;
 }
+
+.site-brand__text {
+  display: inline-flex;
+  align-items: baseline;
+  transform: translateY(-0.02em);
+}
+
+.site-brand__prefix,
+.site-brand__suffix { color: var(--color-text); }
+
+.site-brand__name { color: var(--color-brand); }
+
+.site-brand:hover .site-brand__code,
+.site-brand:hover .site-brand__name { color: var(--color-primary-hover); }
+
+.site-brand:hover { color: var(--color-text); }
 
 .environment-label,
 .eyebrow,
@@ -53,8 +74,10 @@
   padding: clamp(1.5rem, 5vw, 3.5rem);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-large);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
+  background:
+    radial-gradient(circle at 92% 18%, var(--color-surface-soft) 0, transparent 28%),
+    linear-gradient(135deg, var(--color-page) 0%, var(--color-surface) 100%);
+  box-shadow: var(--shadow-panel);
 }
 
 .eyebrow {
@@ -102,7 +125,8 @@
   padding: var(--space-5);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
-  background: var(--color-surface);
+  background: var(--color-page);
+  box-shadow: var(--shadow-card);
 }
 
 .card-number {
@@ -128,7 +152,10 @@
   font-size: var(--font-size-small);
 }
 
-.site-footer { border-top: 1px solid var(--color-border); }
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
 
 .footer-inner {
   min-height: 4rem;
