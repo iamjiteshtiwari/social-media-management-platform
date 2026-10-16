@@ -55,6 +55,26 @@ function runBackendSelfTests() {
     });
   });
 
+  check("PBKDF2-HMAC-SHA-256 matches the standard one-iteration vector", function () {
+    const bytes = pbkdf2Sha256_("password", "salt", 1, 32);
+    const hex = bytes.map(function (value) {
+      return ("0" + ((value + 256) % 256).toString(16)).slice(-2);
+    }).join("");
+    return hex === "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17";
+  });
+
+  check("email normalization rejects malformed addresses", function () {
+    return normalizeEmail_("USER@example.com") === "user@example.com" &&
+      normalizeEmail_("not-an-email") === "";
+  });
+
+  check("only active, verified, approved accounts authenticate", function () {
+    const base = { status: ACCOUNT_STATUS.ACTIVE, email_verified_at: "2026-01-01T00:00:00.000Z", approved_at: "2026-01-01T00:00:00.000Z", disabled_at: "", suspended_at: "", deleted_at: "" };
+    return canAccountAuthenticate_(base) &&
+      !canAccountAuthenticate_(Object.assign({}, base, { status: ACCOUNT_STATUS.SUSPENDED })) &&
+      !canAccountAuthenticate_(Object.assign({}, base, { approved_at: "" }));
+  });
+
   check("missing CAPTCHA token is rejected before configuration lookup", function () {
     const registration = verifyCaptcha_("", "registration");
     const login = verifyCaptcha_("", "login");
