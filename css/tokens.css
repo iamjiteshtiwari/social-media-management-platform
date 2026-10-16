@@ -41,3 +41,24 @@
   --font-size-title: clamp(2.25rem, 8vw, 3.5rem);
   --line-height-body: 1.6;
 }
+
+
+/* Shared dark theme tokens; component CSS consumes these local variables. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-page: #0b1220;
+  --color-header-bg: #111c2e;
+  --color-surface: #142238;
+  --color-surface-soft: #1d3555;
+  --color-text: #e7eef8;
+  --color-text-muted: #b4c4d8;
+  --color-text-subtle: #8fa4bd;
+  --color-border: #30445e;
+  --color-primary: #75a7ff;
+  --color-primary-hover: #9bbdff;
+  --color-primary-soft: #1d3555;
+  --color-brand: #75a7ff;
+  --color-success: #65d6a0;
+  --shadow-card: 0 4px 14px rgb(0 0 0 / 18%);
+  --shadow-panel: 0 8px 28px rgb(0 0 0 / 28%);
+}
