@@ -54,6 +54,38 @@ document.addEventListener("DOMContentLoaded", () => {
       if (window.matchMedia("(min-width: 761px)").matches) closeWorkspaceMenu();
     });
   }
+  const destinationModal = document.querySelector("#destination-choice");
+  const brandLink = document.querySelector(".site-brand");
+
+  if (destinationModal && brandLink) {
+    const dialog = destinationModal.querySelector('[role="dialog"]');
+    const closeButtons = destinationModal.querySelectorAll("[data-destination-close]");
+    let previousFocus = null;
+
+    const closeDestinationModal = () => {
+      destinationModal.hidden = true;
+      document.body.classList.remove("modal-open");
+      if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+    };
+
+    brandLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      previousFocus = brandLink;
+      destinationModal.hidden = false;
+      document.body.classList.add("modal-open");
+      if (dialog) dialog.focus();
+    });
+
+    closeButtons.forEach((button) => button.addEventListener("click", closeDestinationModal));
+
+    destinationModal.addEventListener("click", (event) => {
+      if (event.target === destinationModal) closeDestinationModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !destinationModal.hidden) closeDestinationModal();
+    });
+  }
 
   const year = document.querySelector("#current-year");
   if (year) year.textContent = String(new Date().getFullYear());
