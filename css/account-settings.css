@@ -1,0 +1,24 @@
+.settings-layout { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(17rem,.9fr); align-items:start; gap:var(--space-4); }
+.settings-layout .workspace-card { margin-top:0; }
+.settings-side { display:grid; gap:var(--space-4); }
+.profile-hero { display:flex; align-items:center; gap:var(--space-3); margin:var(--space-5) 0; padding-bottom:var(--space-4); border-bottom:1px solid var(--color-border); }
+.profile-avatar { display:grid; width:3.5rem; height:3.5rem; place-items:center; border-radius:50%; background:var(--color-primary-soft); color:var(--color-primary); font-size:1.1rem; font-weight:850; }
+.profile-hero strong { color:var(--color-text); }
+.profile-hero p { margin:.15rem 0 0; font-size:var(--font-size-small); }
+.settings-form { display:grid; gap:var(--space-3); }
+.settings-form .form-field { display:grid; gap:.4rem; }
+.settings-form label { color:var(--color-text); font-size:var(--font-size-small); font-weight:750; }
+.settings-form input { width:100%; min-height:2.7rem; padding:.6rem .75rem; border:1px solid var(--color-border); border-radius:var(--radius-small); background:#fff; color:var(--color-text); font:inherit; }
+.settings-form input:focus { outline:3px solid var(--color-primary-soft); border-color:var(--color-primary); }
+.settings-status { margin-top:var(--space-4); }
+.status-pill { display:inline-flex; padding:.3rem .6rem; border-radius:999px; font-size:.75rem; font-weight:750; }
+.status-pill--pending { background:#fef3c7; color:#92400e; }
+.settings-status p { margin:var(--space-3) 0; font-size:var(--font-size-small); }
+.settings-status a,.settings-row a { color:var(--color-primary); font-size:var(--font-size-small); font-weight:750; text-decoration:none; }
+.settings-status a:hover,.settings-row a:hover { text-decoration:underline; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-3) 0; border-bottom:1px solid var(--color-border); }
+.settings-row>span:first-child { display:grid; gap:.2rem; }
+.settings-row strong { color:var(--color-text); font-size:var(--font-size-small); }
+.settings-row small { color:var(--color-text-subtle); font-size:.75rem; }
+.settings-signout { width:100%; margin-top:var(--space-4); }
+@media(max-width:760px) { .settings-layout { grid-template-columns:1fr; } }
