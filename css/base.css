@@ -1,0 +1,62 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+button,
+input,
+textarea,
+select { font: inherit; }
+
+button,
+a { -webkit-tap-highlight-color: transparent; }
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+p { margin-top: 0; }
+
+h1,
+h2 {
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+h1 { font-size: var(--font-size-title); }
+h2 { font-size: 1.2rem; }
+p { color: var(--color-text-muted); }
+
+.skip-link {
+  position: absolute;
+  z-index: 10;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  transform: translateY(-160%);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.skip-link:focus { transform: translateY(0); }
