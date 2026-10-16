@@ -54,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (otp) {
         feedback.textContent = "Design preview only: this code was not verified and no account status was changed.";
+      } else if (form.id === "reset-password-form") {
+        feedback.textContent = "Design preview only: the reset code was not checked and your password was not changed.";
       } else if (confirm) {
         feedback.textContent = "Design preview only: no account was created and no information was sent or saved.";
       } else if (form.querySelector("#recovery-email")) {
