@@ -20,6 +20,7 @@ This folder is a source-controlled, modular Google Apps Script backend foundatio
 - `Schema.gs`: versioned master and operational sheet column definitions.
 - `SheetRepository.gs`: spreadsheet access and safe header/record helpers.
 - `HealthService.gs`: non-sensitive health information.
+- `Tests.gs`: safe self-tests for schema contracts, CAPTCHA rejection of missing tokens, and scaffold readiness.
 
 Keep modules independent so future providers, social networks, queues, and storage adapters can be added without rewriting the request router.
 
