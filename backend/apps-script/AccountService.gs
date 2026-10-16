@@ -70,9 +70,14 @@ function registerAccount_(input) {
     try {
       issueEmailVerificationOtp_(userId, data.email, data.fullName);
     } catch (error) {
+      const challengeSheet = getRequiredSheet_(getMasterSpreadsheet_(), "AuthChallenges");
+      const failedChallenge = findLatestChallenge_(challengeSheet, userId, "email_verification");
+      if (failedChallenge && !failedChallenge.consumed_at) {
+        consumeChallenge_(challengeSheet, failedChallenge.rowNumber, new Date().toISOString());
+      }
       updateUserFieldsById_(userId, {
         status: ACCOUNT_STATUS.PENDING_EMAIL,
-        status_reason: "Verification email delivery failed; resend is available after cooldown",
+        status_reason: "Verification email delivery failed; resend is available",
         updated_at: new Date().toISOString()
       });
       appendAuditEvent_({
@@ -136,7 +141,7 @@ function verifyRegistrationEmailOtp_(input) {
       attempt_count: nextAttemptCount
     });
 
-    const expected = hashOtp_(otp);
+    const expected = hashOtp_(otp, latest.challenge_id, user.user_id);
     if (!constantTimeStringEquals_(expected, String(latest.verifier_hash || ""))) {
       if (nextAttemptCount >= EMAIL_OTP_MAX_ATTEMPTS) {
         consumeChallenge_(challenges, latest.rowNumber, new Date(nowMs).toISOString());
@@ -183,11 +188,11 @@ function resendRegistrationEmailOtp_(input) {
     const master = getMasterSpreadsheet_();
     const usersSheet = getRequiredSheet_(master, "Users");
     const match = findRecordByValue_(usersSheet, "email_normalized", email);
-    if (!match) return { ok: false, code: "REQUEST_NOT_AVAILABLE" };
+    if (!match) return { ok: true, code: "VERIFICATION_SENT" };
 
     const user = rowToRecord_(usersSheet, match);
     if (user.status !== ACCOUNT_STATUS.PENDING_EMAIL) {
-      return { ok: false, code: "REQUEST_NOT_AVAILABLE" };
+      return { ok: true, code: "VERIFICATION_SENT" };
     }
 
     const challenges = getRequiredSheet_(master, "AuthChallenges");
@@ -249,11 +254,10 @@ function issueEmailVerificationOtp_(userId, email, fullName) {
   });
 }
 
-function hashOtp_(otp) {
+function hashOtp_(otp, challengeId, userId) {
   const secret = getRequiredPrivateProperty_(AppConfig.PROPERTY.OTP_HMAC_SECRET);
-  return Utilities.base64Encode(
-    Utilities.computeHmacSha256Signature(String(otp), secret)
-  );
+  const message = String(challengeId || "") + "|" + String(userId || "") + "|" + String(otp);
+  return Utilities.base64Encode(Utilities.computeHmacSha256Signature(message, secret));
 }
 
 function normalizeRegistrationInput_(input) {
