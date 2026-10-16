@@ -25,8 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
         menuButton.setAttribute("aria-expanded", "false");
         menuButton.setAttribute("aria-label", "Open workspace menu");
         workspaceNav.classList.remove("is-open");
-        workspaceNav.querySelectorAll("a").forEach((item) => item.removeAttribute("aria-current"));
-        link.setAttribute("aria-current", "page");
+        workspaceNav.querySelectorAll("a").forEach((item) => {
+          if (item === link) item.setAttribute("aria-current", "page");
+          else item.removeAttribute("aria-current");
+        });
       });
     });
 
