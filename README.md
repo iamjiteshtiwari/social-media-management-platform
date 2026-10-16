@@ -1,10 +1,8 @@
-# social-media-management-platform
-A custom, mobile-first social media management platform built with HTML, CSS, JavaScript and Google Apps Script. 
+# Social Media Management Platform
 
+A custom, mobile-first social media management platform prototype built with original HTML, CSS and JavaScript. The frontend-first workflow is intentional: finish and review the visual prototype before connecting any backend or third-party services.
 
 ## Visual prototype pages
-
-The following static pages are part of the design review stage:
 
 - `index.html` — platform overview
 - `login.html` — sign-in
@@ -22,6 +20,16 @@ The following static pages are part of the design review stage:
 - `publishing-queue.html` — draft, scheduled, published and attention-needed posts
 - `analytics.html` — sample performance and platform reporting
 - `notifications.html` — local-only notification filters and read-state interactions
-- `admin-approvals.html` — administrator approval queue concept (local-only sample rows)
+- `admin-approvals.html` — administrator approval queue concept
 
-All account, calendar, queue, analytics, notifications and media actions are visual prototypes only. They do not transmit or persist form data, send email, authenticate a user, upload files, connect a social account, or publish content. Real integration begins only after visual review. The main portfolio repository is separate and must not be modified.
+## Quality assurance status
+
+The page inventory exists, but full browser and device QA is not yet verified. See [the visual prototype checklist](docs/visual-prototype-checklist.md) for remaining mobile, tablet, desktop, accessibility, navigation and interaction checks.
+
+## Prototype boundary
+
+This is a visual/local-interaction prototype only. It does not create or authenticate real accounts, send verification or recovery emails, persist data, upload media, connect social accounts, schedule posts, publish content, or fetch live analytics. Sample users, posts, metrics and notifications are fictional. Do not imply that any local preview action changed a real account or service.
+
+## Project boundary
+
+Use the existing custom CSS design system and shared components; do not add Bootstrap or duplicate pages. The main portfolio website and its repository are separate and out of scope. Backend integration begins only after the visual prototype is reviewed and approved.
