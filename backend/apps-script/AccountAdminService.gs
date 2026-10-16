@@ -142,3 +142,49 @@ function requireActiveAdmin_(sessionToken) {
   if (!context || String(context.user.role) !== "admin") return null;
   return context;
 }
+
+/**
+ * Manual-only first-admin bootstrap. Run from the Apps Script editor after the
+ * owner has registered and verified their email. Remove both private flags
+ * immediately afterward. This function is not routed through the public API.
+ */
+function bootstrapFirstAdminAccount() {
+  if (getPrivateProperty_("ENABLE_FIRST_ADMIN_BOOTSTRAP") !== "YES") {
+    throw new Error("FIRST_ADMIN_BOOTSTRAP_NOT_ENABLED");
+  }
+  const configuredEmail = normalizeEmail_(getRequiredPrivateProperty_("BOOTSTRAP_ADMIN_EMAIL"));
+  if (!configuredEmail) throw new Error("BOOTSTRAP_ADMIN_EMAIL_INVALID");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const users = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
+    const lastRow = users.getLastRow();
+    if (lastRow >= 2) {
+      const rows = users.getRange(2, 1, lastRow - 1, users.getLastColumn()).getValues();
+      for (let i = 0; i < rows.length; i++) {
+        const record = rowToRecord_(users, { values: rows[i] });
+        if (String(record.role) === "admin" && String(record.status) !== ACCOUNT_STATUS.DELETED) {
+          throw new Error("ADMIN_ALREADY_EXISTS");
+        }
+      }
+    }
+    const match = findRecordByValue_(users, "email_normalized", configuredEmail);
+    if (!match) throw new Error("BOOTSTRAP_ACCOUNT_NOT_FOUND");
+    const user = rowToRecord_(users, match);
+    if (user.status !== ACCOUNT_STATUS.PENDING_APPROVAL || !user.email_verified_at) {
+      throw new Error("BOOTSTRAP_ACCOUNT_MUST_HAVE_VERIFIED_EMAIL");
+    }
+    const now = new Date().toISOString();
+    updateSheetRowFields_(users, match.rowNumber, {
+      role: "admin",
+      status: ACCOUNT_STATUS.ACTIVE,
+      status_reason: "",
+      approved_at: now,
+      updated_at: now
+    });
+    appendAuditEvent_({ user_id: String(user.user_id), action: "first_admin_bootstrapped", outcome: "success", details: { method: "manual_script_execution" } });
+    return { ok: true, code: "FIRST_ADMIN_BOOTSTRAPPED" };
+  } finally {
+    lock.releaseLock();
+  }
+}
