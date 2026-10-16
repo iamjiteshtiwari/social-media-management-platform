@@ -4,7 +4,9 @@
 
 Finish and QA the complete visual prototype before starting backend/service integration. Continue from the current `JTCodes` branch and reuse the existing custom CSS system; do not recreate or duplicate pages.
 
-## Existing page inventory — built, pending QA
+## Existing page inventory — built
+
+All listed pages were reviewed at source level for their intended preview behavior. Browser rendering and device QA remain separate final checks.
 
 - [x] Platform overview and feature entry points
 - [x] Registration, sign-in, password recovery, email OTP and pending approval pages
@@ -17,15 +19,16 @@ Finish and QA the complete visual prototype before starting backend/service inte
 
 ## QA fixes to address
 
-- [ ] Verify all page navigation is routed to actual HTML pages where appropriate; remove placeholder anchors that do not represent a real destination.
+- [x] Source-check local HTML links and in-page anchors across all 17 pages; no broken local page links or missing anchor targets found.
 - [ ] Test account popup and logo destination modal on desktop and mobile, including click, outside click, Escape dismissal, keyboard focus and scrolling.
-- [ ] Validate the workspace navigation on all page types and screen sizes.
-- [ ] Check registration, sign-in, password recovery and OTP client-side validation and feedback, while keeping every action explicitly preview-only.
-- [ ] Check date/time validation and calendar month navigation.
-- [ ] Check filtering, searching, read state and approval sample actions.
+- [x] Review workspace menu handlers for both navigation markup variants; add outside-click, Escape, focus restoration and desktop-resize closing to the dashboard variant.
+- [x] Review registration, sign-in, password recovery and OTP client-side validation/feedback; actions remain preview-only.
+- [x] Review future date/time validation and calendar month navigation; reporting-period selection now updates illustrative chart labels and status feedback.
+- [x] Review queue and notification filters/search, read states, media filters and approval sample actions; repaired a syntax error that prevented the shared queue/notification/approval script from running.
 - [ ] Verify mobile, tablet and desktop layouts; horizontal table scrolling; long text; chart and calendar overflow.
-- [ ] Check keyboard navigation, focus visibility, accessible names, labels, duplicate IDs, broken links, missing assets, JavaScript syntax errors and console errors.
-- [ ] Inspect the deployed app in a working browser before claiming browser QA or deployment verification.
+- [x] Source-check duplicate IDs, local links and anchor targets; add a keyboard focus loop to the logo destination dialog.
+- [ ] Run JavaScript syntax checks and browser-console checks in a real browser; source review alone is not a substitute.
+- [ ] Inspect the deployed app in a working browser on desktop, tablet and mobile before claiming browser QA or deployment verification.
 
 ## Local-only behavior boundary
 
