@@ -36,6 +36,7 @@
         <div class="field-heading"><label for="login-password">Password</label><a href="forgot-password.html">Forgot password?</a></div>
         <div class="password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="8"><button type="button" class="password-toggle" data-password-toggle="login-password" aria-label="Show password">Show</button></div>
         <div class="form-options"><label class="checkbox-label"><input type="checkbox" name="remember"> Keep me signed in</label></div>
+        <section class="captcha-preview" aria-labelledby="login-captcha-title" data-captcha-purpose="login"><div class="captcha-preview__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3.2 19 6v5.1c0 4.5-2.9 7.9-7 9.7-4.1-1.8-7-5.2-7-9.7V6l7-2.8Z"></path><path d="m8.7 11.8 2.1 2.1 4.6-4.7"></path></svg></div><div class="captcha-preview__copy"><strong id="login-captcha-title">Security verification</strong><p>CAPTCHA will be connected during integration. This preview does not verify that you are human.</p><span class="captcha-preview__status"><span aria-hidden="true"></span> Not connected yet</span></div></section>
         <button class="button-primary" type="submit">Sign in <span aria-hidden="true">→</span></button>
         <p class="form-feedback" role="status" aria-live="polite"></p>
       </form>
