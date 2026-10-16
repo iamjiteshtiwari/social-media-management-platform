@@ -131,3 +131,23 @@
 :root[data-theme="dark"] .status-pill--green { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .status-pill--red { border-color: #71383c; background: #3a2027; color: #ffb4bd; }
 :root[data-theme="dark"] .status-pill--blue { border-color: #29496f; background: #142a45; color: #c9defb; }
+
+/* Theme support for all workspace surfaces and controls. */
+
+:root[data-theme="dark"] .planner-filter select,
+:root[data-theme="dark"] .media-toolbar select,
+:root[data-theme="dark"] .media-toolbar input,
+:root[data-theme="dark"] .workspace-heading select,
+:root[data-theme="dark"] .queue-toolbar input { background: var(--color-page); color: var(--color-text); }
+:root[data-theme="dark"] .calendar-cell.is-muted { background: #101b2b; color: var(--color-text-subtle); }
+:root[data-theme="dark"] .media-library-item,
+:root[data-theme="dark"] .panel-section,
+:root[data-theme="dark"] .summary-grid .metric-card,
+:root[data-theme="dark"] .integration-card,
+:root[data-theme="dark"] .notification-item { background: var(--color-surface); }
+:root[data-theme="dark"] .media-library-item--empty { background: var(--color-page); }
+:root[data-theme="dark"] .media-file-preview--image { background: linear-gradient(145deg, #1d3555, #142238 45%, #304d75); }
+:root[data-theme="dark"] .platform-mark { background: var(--color-primary-soft); color: var(--color-primary); }
+:root[data-theme="dark"] .status-pill { background: var(--color-surface-soft); color: var(--color-text-muted); }
+:root[data-theme="dark"] .preview-banner { border-color: #29496f; background: #142a45; color: #c9defb; }
+:root[data-theme="dark"] .data-table tbody tr:hover { background: var(--color-page); }
