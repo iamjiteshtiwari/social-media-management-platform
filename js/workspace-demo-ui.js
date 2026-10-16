@@ -66,5 +66,29 @@ document.addEventListener("DOMContentLoaded", () => {\n  document.querySelectorA
     });
     updateUnreadCount(); filterNotifications(); announce("All sample notifications are marked as read in this page preview only.");
   });
-  updateUnreadCount(); filterQueue(); filterNotifications();
+  const approvalRows = [...document.querySelectorAll("[data-approval-row]")];
+  const approvalSearch = document.querySelector("#approval-search");
+  const approvalEmpty = document.querySelector("#approval-empty");
+  const filterApprovals = () => {
+    const term = (approvalSearch?.value || "").trim().toLowerCase();
+    let visible = 0;
+    approvalRows.forEach((row) => {
+      row.hidden = !row.textContent.toLowerCase().includes(term);
+      if (!row.hidden) visible += 1;
+    });
+    if (approvalEmpty) approvalEmpty.hidden = visible > 0;
+  };
+  approvalSearch?.addEventListener("input", filterApprovals);
+  document.querySelectorAll("[data-approval-action]").forEach((button) => button.addEventListener("click", () => {
+    const row = button.closest("[data-approval-row]");
+    if (!row) return;
+    const name = row.querySelector("td strong")?.textContent || "Sample applicant";
+    const action = button.dataset.approvalAction;
+    row.querySelector("td:last-child").innerHTML = '<span class="status-pill ' + (action === "approved" ? "status-pill--green" : "status-pill--red") + '">' + (action === "approved" ? "Approved in preview" : "Rejected in preview") + '</span>';
+    row.dataset.reviewed = "true";
+    const count = document.querySelector("#approval-count");
+    if (count) count.textContent = String(approvalRows.filter((item) => !item.dataset.reviewed).length);
+    announce(name + " marked " + action + " in this local preview only. No real account was changed.");
+  }));
+  updateUnreadCount(); filterQueue(); filterNotifications(); filterApprovals();
 });
