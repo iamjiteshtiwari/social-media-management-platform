@@ -1,5 +1,5 @@
 "use strict";
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {\n  document.querySelectorAll("[data-current-year]").forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   const feedback = document.querySelector("#workspace-feedback");
   const announce = (message) => { if (feedback) feedback.textContent = message; };
   document.querySelectorAll("[data-demo-notice]").forEach((button) => button.addEventListener("click", () => announce(button.dataset.demoNotice)));
