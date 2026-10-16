@@ -23,6 +23,7 @@ function registerAccount_(input) {
   const data = normalizeRegistrationInput_(input);
   const captcha = verifyCaptcha_(String(input.captchaToken || ""), "registration");
   if (!captcha.ok) return { ok: false, code: captcha.code };
+  if (MailApp.getRemainingDailyQuota() < 1) return { ok: false, code: "VERIFICATION_EMAIL_UNAVAILABLE" };
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, code: "TRY_AGAIN" };
@@ -30,7 +31,7 @@ function registerAccount_(input) {
   try {
     const users = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
     if (findRecordByValue_(users, "email_normalized", data.email)) {
-      return { ok: false, code: "ACCOUNT_DETAILS_UNAVAILABLE" };
+      return { ok: true, code: "REGISTRATION_ACCEPTED", nextStep: "check_email" };
     }
     if (findRecordByValue_(users, "username", data.username)) {
       return { ok: false, code: "ACCOUNT_DETAILS_UNAVAILABLE" };
@@ -222,8 +223,7 @@ function issueEmailVerificationOtp_(userId, email, fullName) {
   }
 
   // UUID digits provide a non-sequential code; the code is never persisted.
-  const otp = (Utilities.getUuid() + Utilities.getUuid())
-    .replace(/[^0-9]/g, "").slice(0, 6).padEnd(6, "0");
+  const otp = String(parseInt(Utilities.getUuid().replace(/-/g, "").slice(0, 12), 16) % 1000000).padStart(6, "0");
 
   appendRecord_(challenges, {
     challenge_id: Utilities.getUuid(),
@@ -270,13 +270,14 @@ function normalizeRegistrationInput_(input) {
     throw new Error("INVALID_REGISTRATION");
   }
   if (!/^\+?[0-9]{8,15}$/.test(phone)) throw new Error("INVALID_REGISTRATION");
-  if (password.length < 8 || password.length > 256) throw new Error("INVALID_REGISTRATION");
+  if (password.length < 12 || password.length > 128) throw new Error("INVALID_REGISTRATION");
 
   return { fullName: fullName, username: username, email: email, phone: phone, password: password };
 }
 
 function normalizeEmail_(email) {
-  return String(email || "").trim().toLowerCase();
+  const value = String(email || "").trim().toLowerCase();
+  return value.length <= 254 && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value) ? value : "";
 }
 
 function findLatestChallenge_(sheet, userId, challengeType) {
@@ -325,4 +326,59 @@ function updateSheetRowFields_(sheet, rowNumber, fields) {
 
 function consumeChallenge_(sheet, rowNumber, consumedAt) {
   updateSheetRowFields_(sheet, rowNumber, { consumed_at: consumedAt });
+}
+
+function canAccountAuthenticate_(user) {
+  return Boolean(user) && String(user.status) === ACCOUNT_STATUS.ACTIVE &&
+    Boolean(user.email_verified_at) && Boolean(user.approved_at) &&
+    !user.disabled_at && !user.suspended_at && !user.deleted_at;
+}
+
+function loginAccount_(input) {
+  const captcha = verifyCaptcha_(String((input && input.captchaToken) || ""), "login");
+  if (!captcha.ok) return { ok: false, code: "INVALID_CREDENTIALS" };
+  const email = normalizeEmail_(input && input.email);
+  const sheet = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
+  const match = email ? findRecordByValue_(sheet, "email_normalized", email) : null;
+  if (!match) {
+    verifyPassword_("dummy-password-timing-check", "dummy-salt", "not-a-real-hash", "PBKDF2-HMAC-SHA256", 120000);
+    return { ok: false, code: "INVALID_CREDENTIALS" };
+  }
+  const user = rowToRecord_(sheet, match);
+  const validPassword = verifyPassword_(
+    String((input && input.password) || ""),
+    String(user.password_salt || ""),
+    String(user.password_hash || ""),
+    String(user.password_hash_algorithm || ""),
+    Number(user.password_hash_iterations)
+  );
+  if (!validPassword || !canAccountAuthenticate_(user)) {
+    return { ok: false, code: "INVALID_CREDENTIALS" };
+  }
+  const session = createSession_(String(user.user_id));
+  updateSheetRowFields_(sheet, match.rowNumber, { last_login_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+  appendAuditEvent_({ user_id: String(user.user_id), action: "login", outcome: "success", details: { session_id: session.session_id } });
+  return {
+    ok: true,
+    code: "LOGIN_SUCCESS",
+    user: { user_id: String(user.user_id), full_name: String(user.full_name), username: String(user.username), email: email, role: String(user.role) },
+    session: session
+  };
+}
+
+function logoutAccount_(sessionToken) {
+  const context = validateSessionToken_(sessionToken);
+  if (!context) return { ok: true, code: "LOGOUT_COMPLETE" };
+  revokeSession_(String(sessionToken), "user_logout");
+  return { ok: true, code: "LOGOUT_COMPLETE" };
+}
+
+function getCurrentSession_(sessionToken) {
+  const context = validateSessionToken_(sessionToken);
+  if (!context) return { ok: false, code: "SESSION_INVALID" };
+  return {
+    ok: true,
+    user: { user_id: String(context.user.user_id), full_name: String(context.user.full_name), username: String(context.user.username), email: String(context.user.email_normalized), role: String(context.user.role) },
+    expires_at: context.expires_at
+  };
 }
