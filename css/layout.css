@@ -558,3 +558,45 @@ body.modal-open {
 .destination-modal__dialog {
   overscroll-behavior: contain;
 }
+
+
+/* Shared accessible theme toggle. */
+.theme-toggle {
+  display: inline-grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-page);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.theme-toggle svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.theme-toggle__sun { display: none; }
+:root[data-theme="dark"] .theme-toggle__moon { display: none; }
+:root[data-theme="dark"] .theme-toggle__sun { display: block; }
+.header-actions { gap: var(--space-2); }
+
+/* Dark-mode surfaces for components with legacy fixed light backgrounds. */
+:root[data-theme="dark"] .intro-panel {
+  background: radial-gradient(circle at 92% 18%, var(--color-surface-soft) 0, transparent 28%), linear-gradient(135deg, var(--color-page) 0%, var(--color-surface) 100%);
+}
+:root[data-theme="dark"] .site-footer {
+  background: radial-gradient(circle at 8% 0%, var(--color-primary-soft) 0, transparent 28%), linear-gradient(135deg, var(--color-surface) 0%, var(--color-page) 100%);
+}
+:root[data-theme="dark"] .destination-modal__backdrop { background: rgb(0 0 0 / 68%); }
+:root[data-theme="dark"] .account-popover,
+:root[data-theme="dark"] .destination-modal__dialog { background: var(--color-surface); }
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle { transition: none; }
+}
