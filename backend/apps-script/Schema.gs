@@ -15,7 +15,7 @@ function getMasterSchema_() {
       "email_normalized", "phone", "password_hash", "password_salt",
       "password_hash_algorithm", "password_hash_iterations", "password_changed_at",
       "role", "status", "status_reason", "email_verified_at", "approved_at",
-      "suspended_at", "disabled_at", "deleted_at", "created_at", "updated_at", "last_login_at"
+      "suspended_at", "disabled_at", "deleted_at", "login_failed_count", "login_locked_until", "created_at", "updated_at", "last_login_at"
     ],
     ResourceMap: [
       "mapping_id", "user_id", "resource_type", "resource_id",
