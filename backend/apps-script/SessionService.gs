@@ -7,15 +7,17 @@ function createSession_(userId) {
   const lock=LockService.getScriptLock(); lock.waitLock(20000);
   try {
     revokeUserSessions_(String(userId),"replaced_by_new_login");
-    const token=Utilities.getUuid().replace(/-/g,"")+Utilities.getUuid().replace(/-/g,"");
     const sessionId=Utilities.getUuid(), now=Date.now();
+    const nonce=String(userId)+"|"+Utilities.getUuid()+"|"+Utilities.getUuid()+"|"+now;
+    const tokenSecret=getRequiredPrivateProperty_("SESSION_TOKEN_GENERATION_SECRET");
+    const token=Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(nonce,tokenSecret));
     const record={session_id:sessionId,user_id:String(userId),credential_verifier:hmacBase64_(getRequiredPrivateProperty_("SESSION_HMAC_SECRET"),sessionId+"|"+token),issued_at:new Date(now).toISOString(),expires_at:new Date(now+SESSION_ABSOLUTE_LIFETIME_MS).toISOString(),revoked_at:"",revoke_reason:"",created_at:new Date(now).toISOString()};
     appendRecord_(getRequiredSheet_(getMasterSpreadsheet_(),"Sessions"),record);
     return {token:token,session_id:sessionId,issued_at:record.issued_at,expires_at:record.expires_at};
   } finally { lock.releaseLock(); }
 }
 function validateSession_(token) {
-  if(typeof token!=="string"||token.length<50||token.length>100)return null;
+  if(typeof token!=="string"||token.length<40||token.length>60||!/^[A-Za-z0-9_\-=]+$/.test(token))return null;
   const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Sessions"); if(sheet.getLastRow()<2)return null;
   const rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues(),secret=getRequiredPrivateProperty_("SESSION_HMAC_SECRET"),now=Date.now();
   for(let i=rows.length-1;i>=0;i--){const r=rowToRecord_(sheet,{values:rows[i]});if(r.revoked_at||!r.session_id||now>=Date.parse(r.expires_at))continue;const expected=String(r.credential_verifier||""),actual=hmacBase64_(secret,r.session_id+"|"+token);if(!constantTimeStringEqual_(actual,expected))continue;const user=getUserById_(String(r.user_id));if(!canAccountAuthenticate_(user))return null;const userSheet=getRequiredSheet_(getMasterSpreadsheet_(),"Users"),userMatch=findRecordByValue_(userSheet,"user_id",String(r.user_id));return userMatch?{session_id:String(r.session_id),user:user,userRowNumber:userMatch.rowNumber,expires_at:r.expires_at}:null;}
