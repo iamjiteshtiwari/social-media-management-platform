@@ -64,17 +64,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const closeDestinationModal = () => {
       destinationModal.hidden = true;
+      destinationModal.setAttribute("aria-hidden", "true");
       document.body.classList.remove("modal-open");
       if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
     };
 
-    brandLink.addEventListener("click", (event) => {
+    const openDestinationModal = (event) => {
       event.preventDefault();
       previousFocus = brandLink;
       destinationModal.hidden = false;
+      destinationModal.setAttribute("aria-hidden", "false");
       document.body.classList.add("modal-open");
       if (dialog) dialog.focus();
-    });
+    };
+
+    destinationModal.hidden = true;
+    destinationModal.setAttribute("aria-hidden", "true");
+    brandLink.addEventListener("click", openDestinationModal);
 
     closeButtons.forEach((button) => button.addEventListener("click", closeDestinationModal));
 
