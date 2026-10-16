@@ -36,6 +36,15 @@ function runBackendSelfTests() {
     }) && Object.keys(schema).length === expected.length;
   });
 
+  check("operational schema preview matches the operational contract", function () {
+    const preview = previewOperationalSchema();
+    return preview.version === MASTER_SCHEMA_VERSION &&
+      preview.sheets.length === Object.keys(getOperationalSchema_()).length &&
+      preview.sheets.every(function (sheet) {
+        return sheet.name && Array.isArray(sheet.headers) && sheet.headers.length > 0;
+      });
+  });
+
   check("user schema does not store raw passwords or provider tokens", function () {
     const headers = getMasterSchema_().Users.map(function (header) {
       return header.toLowerCase();
