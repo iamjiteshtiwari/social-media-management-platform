@@ -66,11 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (restoreFocus) accountButton.focus();
     };
 
+    const openAccountPopover = () => {
+      accountPopover.hidden = false;
+      accountButton.setAttribute("aria-expanded", "true");
+    };
+
     accountButton.addEventListener("click", (event) => {
       event.preventDefault();
       const shouldOpen = accountPopover.hidden;
-      accountPopover.hidden = !shouldOpen;
-      accountButton.setAttribute("aria-expanded", String(shouldOpen));
+      if (shouldOpen) openAccountPopover();
+      else closeAccountPopover();
     });
 
     document.addEventListener("click", (event) => {
