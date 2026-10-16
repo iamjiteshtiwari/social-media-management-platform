@@ -179,7 +179,8 @@ function resendRegistrationEmailOtp_(input) {
   const email = normalizeEmail_(input && input.email);
   const captcha = verifyCaptcha_(String((input && input.captchaToken) || ""), "registration");
   if (!captcha.ok) return { ok: false, code: captcha.code };
-  if (!email) return { ok: false, code: "REQUEST_NOT_AVAILABLE" };
+  if (MailApp.getRemainingDailyQuota() < 1) return { ok: false, code: "VERIFICATION_EMAIL_UNAVAILABLE" };
+  if (!email) return { ok: true, code: "VERIFICATION_SENT" };
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, code: "TRY_AGAIN" };
@@ -203,7 +204,12 @@ function resendRegistrationEmailOtp_(input) {
       return { ok: false, code: "RESEND_COOLDOWN" };
     }
 
-    issueEmailVerificationOtp_(user.user_id, email, user.full_name);
+    try {
+      issueEmailVerificationOtp_(user.user_id, email, user.full_name);
+    } catch (error) {
+      appendAuditEvent_({ user_id: user.user_id, action: "email_otp_resend", outcome: "failed", details: { reason: "MAIL_DELIVERY_FAILED" } });
+      return { ok: false, code: "VERIFICATION_EMAIL_UNAVAILABLE" };
+    }
     appendAuditEvent_({
       user_id: user.user_id,
       action: "email_otp_resend",
@@ -243,15 +249,21 @@ function issueEmailVerificationOtp_(userId, email, fullName) {
     created_at: nowIso
   });
 
-  MailApp.sendEmail({
-    to: email,
-    subject: "Verify your Social Media Management Platform account",
-    name: "Social Media Management Platform",
-    body: "Hello " + String(fullName || "there") + ",\n\n" +
-      "Your email verification code is: " + otp + "\n\n" +
-      "This code expires in 5 minutes and can be used once. If you did not request this, ignore this email.\n\n" +
-      "Social Media Management Platform"
-  });
+  try {
+    MailApp.sendEmail({
+      to: email,
+      subject: "Verify your Social Media Management Platform account",
+      name: "Social Media Management Platform",
+      body: "Hello " + String(fullName || "there") + ",\n\n" +
+        "Your email verification code is: " + otp + "\n\n" +
+        "This code expires in 5 minutes and can be used once. If you did not request this, ignore this email.\n\n" +
+        "Social Media Management Platform"
+    });
+  } catch (error) {
+    const failed = findLatestChallenge_(challenges, userId, "email_verification");
+    if (failed && !failed.consumed_at) consumeChallenge_(challenges, failed.rowNumber, new Date().toISOString());
+    throw new Error("VERIFICATION_EMAIL_UNAVAILABLE");
+  }
 }
 
 function hashOtp_(otp, challengeId, userId) {
