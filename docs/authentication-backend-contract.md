@@ -1,8 +1,8 @@
-# Authentication Backend Contract (Planning Only)
+# Authentication Backend Contract and Implementation Status
 
 ## Status and boundaries
 
-This is a proposed contract for the next implementation stage. It is not deployed, and no real account data is being processed. Do not connect the static forms to a production backend until the session transport and threat model are approved.
+The account modules now exist as source code on `s4-backend-foundation`, but are not deployed and no real account data is being processed. Registration/OTP and recovery routes are behind private feature flags; login/session/admin routes remain disabled at the API boundary until session-token generation and browser transport are resolved. Do not connect the static forms to a production backend before those gates are closed.
 
 - Frontend: static HTML, custom CSS, vanilla JavaScript.
 - Backend candidate: Google Apps Script web app.
@@ -12,7 +12,7 @@ This is a proposed contract for the next implementation stage. It is not deploye
 
 ## Account lifecycle
 
-`pending_email` → `pending_approval` → `active` → (optional) `suspended`
+`pending_email` → `pending_approval` → `active` → (optional) `suspended` / `disabled` → (optional) `deletion_pending` → `deleted`
 
 1. Registration creates a pending record only after server-side validation and uniqueness checks.
 2. A single-use email OTP verifies email ownership; it does not activate the account.
@@ -43,7 +43,8 @@ All operations are logical names, not deployed URLs. Every input is validated on
 - Normalize email and username consistently on the server; enforce uniqueness with concurrency protection (for example, a script lock around the check-and-write sequence).
 - Never trust client-side validation as a security boundary.
 - Passwords must be stored only using a suitable password-hashing approach; never store plaintext passwords or reversible password values. Before selecting an implementation, verify that the chosen runtime provides a vetted, supported password-hashing primitive. Do not invent a custom password hash.
-- OTP: six decimal digits, five-minute expiry, maximum five verification attempts, 60-second resend cooldown, new code invalidates old code, single use.
+- OTP: six decimal digits, five-minute expiry, maximum five verification attempts, 60-second resend cooldown, new code invalidates old code, single use. The source binds the HMAC verifier to the challenge and user IDs.
+- Login throttling in source: five invalid password attempts trigger a 15-minute account lockout. This still needs runtime and concurrency verification.
 - Store an OTP verifier using a server-only keyed HMAC or a reviewed equivalent; never store/log the plaintext OTP or a bare fast hash of a six-digit OTP.
 - Generic public responses must limit account enumeration. Do not put OTPs, passwords, session tokens, or reset credentials in logs.
 - If mail quota is exhausted or delivery fails, fail safely, return a generic retry-later response, and do not mark the email verified.
@@ -56,7 +57,7 @@ All operations are logical names, not deployed URLs. Every input is validated on
 - A browser return within the nine-hour lifetime may resume only if a valid session credential is securely transported and validated by the server.
 - Never trust a browser-supplied user ID, role, approval status, or spreadsheet row number.
 - Do not ship a session token in a URL, query string, localStorage, or logs.
-- Session credential transport remains an explicit blocker. Apps Script Content Service redirects output to a one-time `googleusercontent.com` URL and its documented `TextOutput` API does not document arbitrary response headers or a `Set-Cookie` method. Do not assume a secure HttpOnly cookie can be set from this endpoint. Do not promote the existing integration POC to production authentication.
+- Session credential transport remains an explicit blocker. The current source token construction uses Apps Script UUIDs; cryptographic unpredictability has not been established, so session creation is not production-approved. Apps Script Content Service redirects output to a one-time `googleusercontent.com` URL and its documented `TextOutput` API does not document arbitrary response headers or a `Set-Cookie` method. Do not assume a secure HttpOnly cookie can be set from this endpoint. Do not promote the existing integration POC to production authentication.
 - If no secure, supported transport can be demonstrated and tested, stop and choose a different backend architecture rather than weakening the session requirement.
 
 ## Quota and reliability checks
