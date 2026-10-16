@@ -86,3 +86,17 @@
 :root[data-theme="dark"] .status-illustration { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .approval-step.is-complete > span { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .approval-step.is-pending > span { border-color: #29496f; background: #142a45; color: #c9defb; }
+
+
+/* Shared Google reCAPTCHA widget: use the existing auth-card design system. */
+.captcha-widget { display: block; min-width: 0; padding: 0.9rem; border: 1px solid var(--color-border); border-radius: var(--radius-medium); background: var(--color-page); }
+.captcha-widget .captcha-preview__copy { min-width: 0; }
+.captcha-widget .captcha-preview__copy > strong { display: block; color: var(--color-text); font-size: var(--font-size-small); }
+.captcha-widget .captcha-preview__copy > p { margin: 0.25rem 0 0.65rem; color: var(--color-text-muted); font-size: 0.75rem; line-height: 1.5; }
+.captcha-widget .g-recaptcha { max-width: 100%; overflow: hidden; }
+.captcha-widget .captcha-preview__status { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.65rem; color: var(--color-text-subtle); font-size: 0.72rem; font-weight: 700; }
+.captcha-widget .captcha-preview__status > span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #d97706; }
+:root[data-theme="dark"] .captcha-widget { background: var(--color-page); }
+@media (max-width: 360px) {
+  .captcha-widget .g-recaptcha { transform: scale(0.88); transform-origin: left top; margin-bottom: -0.45rem; }
+}
