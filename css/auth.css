@@ -130,3 +130,8 @@
 .button-danger:disabled { border-color:var(--color-border); background:var(--color-surface-soft); color:var(--color-text-subtle); cursor:not-allowed; }
 :root[data-theme="dark"] .closure-warning-icon { border-color:#71383c; background:#3a2027; color:#ffb4bd; }
 :root[data-theme="dark"] .closure-consequences { border-color:#71383c; background:#241a22; }
+
+.button-danger { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: var(--space-3); padding: 0.7rem 1rem; border: 1px solid #b42318; border-radius: var(--radius-small); background: #b42318; color: #fff; cursor: pointer; font-weight: 750; text-decoration: none; transition: background-color 150ms ease, transform 150ms ease; }
+.button-danger:hover { background: #912018; }
+.button-danger:active { transform: translateY(1px); }
+.button-danger:disabled { border-color: var(--color-border); background: var(--color-surface-soft); color: var(--color-text-subtle); cursor: not-allowed; }
