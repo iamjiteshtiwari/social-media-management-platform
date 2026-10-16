@@ -23,10 +23,11 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `Api.gs`: small request entry point and safe response contract.
 - `Config.gs`: server-side Script Properties access.
 - `PasswordService.gs`: server-side PBKDF2-HMAC-SHA-256 password hashing and verification.
-- `AccountService.gs`: registration validation, server-side CAPTCHA gate, latest-only email OTP, resend cooldown, attempt/expiry enforcement, email verification, and pending-approval transition.
+- `AccountService.gs`: registration, server-side CAPTCHA checks, email OTP verification/resend, login service logic, logout and current-session service functions.
 - `SessionService.gs`: fixed nine-hour absolute session expiry, one active session per user, verifier-only session storage, logout and revocation helpers.
 - `AccountAdminService.gs`: pending-account approval, suspend/disable/reactivate controls, session revocation and owner-requested account deletion with profile anonymization.
 - `CaptchaService.gs`: server-side Google reCAPTCHA verification for registration/login.
+- `AccountAdminService.gs`: approval, suspend/disable/reactivate, profile-anonymizing self-deletion, and a guarded manual first-admin bootstrap.
 - `Schema.gs`: versioned master and operational sheet column definitions.
 - `SheetRepository.gs`: spreadsheet access and safe header/record helpers.
 - `HealthService.gs`: non-sensitive health information.
@@ -42,6 +43,9 @@ Set these only in the private Apps Script project under the personal account. Ne
 - `APP_ALLOWED_HOSTNAME` = `social.iamjiteshtiwari.in`
 - `MASTER_SPREADSHEET_ID` = ID of the personal-account master spreadsheet
 - `OTP_HMAC_SECRET` = long random private value used to protect low-entropy OTP verifiers
+- `BOOTSTRAP_ADMIN_EMAIL` = the owner email, entered only when preparing first-admin bootstrap
+- `ENABLE_FIRST_ADMIN_BOOTSTRAP` = set to `YES` only while manually running `bootstrapFirstAdminAccount`, then remove it
+- `ENABLE_PUBLIC_REGISTRATION` = keep unset until API deployment, CAPTCHA, quota and browser transport are confirmed; set to `YES` only for an explicitly approved registration launch
 - `ENABLE_PUBLIC_REGISTRATION` = leave unset until the owner explicitly enables public registration after private configuration and transport checks
 - `SESSION_HMAC_SECRET` = long random private value used to protect session credential verifiers
 - `SESSION_TOKEN_GENERATION_SECRET` = separate long random private value used to derive unpredictable opaque session credentials
