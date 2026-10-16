@@ -119,3 +119,14 @@
 .captcha-preview__status { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-text-subtle); font-size: 0.72rem; font-weight: 700; }
 .captcha-preview__status > span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #d97706; }
 :root[data-theme="dark"] .captcha-preview { background: var(--color-page); }
+
+
+/* Self-service account closure confirmation preview */
+.closure-warning-icon { display:grid; width:3.25rem; height:3.25rem; place-items:center; margin-bottom:var(--space-4); border:1px solid #fecaca; border-radius:50%; background:#fef2f2; color:#b42318; font-size:1.6rem; font-weight:850; }
+.closure-consequences { margin:var(--space-4) 0 var(--space-5); padding:1rem; border:1px solid #fecaca; border-radius:var(--radius-medium); background:#fffafa; }
+.closure-consequences h2 { margin-bottom:var(--space-2); font-size:1rem; }
+.closure-consequences ul { display:grid; gap:.55rem; margin:0; padding-left:1.2rem; color:var(--color-text-muted); font-size:var(--font-size-small); line-height:1.55; }
+.closure-check { margin-block:var(--space-2); }
+.button-danger:disabled { border-color:var(--color-border); background:var(--color-surface-soft); color:var(--color-text-subtle); cursor:not-allowed; }
+:root[data-theme="dark"] .closure-warning-icon { border-color:#71383c; background:#3a2027; color:#ffb4bd; }
+:root[data-theme="dark"] .closure-consequences { border-color:#71383c; background:#241a22; }
