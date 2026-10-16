@@ -1,20 +1,30 @@
 :root {
   color-scheme: light;
-  --color-page: #f6f7fb;
-  --color-surface: #ffffff;
-  --color-surface-soft: #eef1f8;
-  --color-text: #172033;
-  --color-text-muted: #626d80;
-  --color-border: #dfe4ee;
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-soft: #e9e8ff;
+
+  /* Adapted from the public visual system of iamjiteshtiwari.in.
+     Kept local to this repository; no live stylesheet dependency. */
+  --color-page: #ffffff;
+  --color-surface: #f3f8ff;
+  --color-surface-soft: #dbeafe;
+  --color-text: #102a43;
+  --color-text-muted: #486581;
+  --color-text-subtle: #627d98;
+  --color-border: #c9d8ea;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #dbeafe;
+  --color-brand: #0971f4;
   --color-success: #18794e;
-  --shadow-card: 0 12px 34px rgb(23 32 51 / 7%);
-  --radius-small: 0.65rem;
-  --radius-medium: 1rem;
-  --radius-large: 1.4rem;
-  --content-width: 70rem;
+
+  --shadow-card: 0 4px 14px rgb(15 23 42 / 6%);
+  --shadow-panel: 0 8px 24px rgb(15 23 42 / 8%);
+
+  --radius-small: 0.375rem;
+  --radius-medium: 0.75rem;
+  --radius-large: 1rem;
+
+  --content-width: 72rem;
+
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -22,9 +32,11 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 3rem;
+
   --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-size-small: 0.875rem;
   --font-size-body: 1rem;
-  --font-size-title: clamp(2rem, 5vw, 3.5rem);
-  --line-height-body: 1.65;
+  --font-size-title: clamp(2.25rem, 8vw, 3.5rem);
+  --line-height-body: 1.6;
 }
