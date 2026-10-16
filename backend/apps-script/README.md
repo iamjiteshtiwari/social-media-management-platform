@@ -27,6 +27,7 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `SheetRepository.gs`: spreadsheet access and safe header/record helpers.
 - `HealthService.gs`: non-sensitive health information.
 - `Tests.gs`: safe self-tests for schema contracts, CAPTCHA rejection of missing tokens, and scaffold readiness.
+- `OperationalSetup.gs`: read-only cross-account access check and explicitly gated initialization for a disposable work-owned operational test sheet.
 
 Keep modules independent so future providers, social networks, queues, and storage adapters can be added without rewriting the request router.
 
@@ -36,6 +37,7 @@ Set these only in the private Apps Script project under the personal account. Ne
 
 - `APP_ALLOWED_HOSTNAME` = `social.iamjiteshtiwari.in`
 - `MASTER_SPREADSHEET_ID` = ID of the personal-account master spreadsheet
+- `OPERATIONAL_TEST_SPREADSHEET_ID` = ID of the disposable work-owned operational test spreadsheet shared with the personal account
 - `RECAPTCHA_REGISTRATION_SECRET` = **rotated replacement secret**, entered directly in Apps Script
 - `RECAPTCHA_LOGIN_SECRET` = **rotated replacement secret**, entered directly in Apps Script if login has its own secret
 - `RECAPTCHA_MIN_SCORE` = optional; used only for score-based keys, recommended starting value `0.5`
@@ -75,10 +77,11 @@ Analytics can initially be derived from publishing logs and provider results rat
 3. Create/identify a disposable master test spreadsheet owned by the personal account and a disposable operational test spreadsheet owned by the work account. Use no real user/client data.
 4. Share only the operational test spreadsheet with the personal account, at the minimum permission needed.
 5. Add the test spreadsheet IDs to private Script Properties. Do not place them in browser code.
-6. Run schema preview first. To create headers, set `ENABLE_SCHEMA_INITIALIZATION` to `YES` in Script Properties and manually run `initializeMasterSchema` against the **disposable test master only**. Remove the flag afterward.
-7. Verify the cross-account read/write and permission-revocation test plan before production resources are considered.
-8. Rotate CAPTCHA secrets, enter replacements directly into Script Properties, and test valid, missing, invalid, expired and reused tokens.
-9. Do not deploy a public web app until the API transport and production session design have been selected and tested.
+6. Run schema preview first. To create master headers, set `ENABLE_SCHEMA_INITIALIZATION` to `YES` in Script Properties and manually run `initializeMasterSchema` against the **disposable test master only**. Remove the flag afterward.
+7. Run `testOperationalSheetAccess` to check cross-account access without modifying the work-owned test sheet. Only after confirming the returned sheet name is the disposable test resource, set `ENABLE_OPERATIONAL_SCHEMA_INITIALIZATION=YES` and run `initializeOperationalTestSchema`. Remove the flag afterward.
+8. Verify cross-account read/write and permission-revocation behavior before production resources are considered.
+9. Rotate CAPTCHA secrets, enter replacements directly into Script Properties, and test valid, missing, invalid, expired and reused tokens.
+10. Do not deploy a public web app until the API transport and production session design have been selected and tested.
 
 ## Important integration gate
 
