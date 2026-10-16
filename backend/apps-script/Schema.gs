@@ -87,7 +87,11 @@ function initializeMasterSchema() {
 
   const spreadsheetId = getRequiredPrivateProperty_(AppConfig.PROPERTY.MASTER_SPREADSHEET_ID);
   const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+  if (!/test/i.test(spreadsheet.getName())) {
+    throw new Error("MASTER_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
+  }
   const schema = getMasterSchema_();
+  validateSchemaCompatibility_(spreadsheet, schema);
 
   Object.keys(schema).forEach(function (sheetName) {
     const headers = schema[sheetName];
@@ -116,4 +120,28 @@ function initializeMasterSchema() {
   });
 
   return { ok: true, version: MASTER_SCHEMA_VERSION, sheets: Object.keys(schema) };
+}
+
+
+/**
+ * Preflight all existing tabs before any initializer writes. This avoids a
+ * partially initialized workbook when a later tab has incompatible headers.
+ */
+function validateSchemaCompatibility_(spreadsheet, schema) {
+  Object.keys(schema).forEach(function (sheetName) {
+    const sheet = spreadsheet.getSheetByName(sheetName);
+    if (!sheet || sheet.getLastRow() === 0) return;
+
+    const expectedHeaders = schema[sheetName];
+    const width = Math.max(sheet.getLastColumn(), expectedHeaders.length);
+    const existing = sheet.getRange(1, 1, 1, width)
+      .getDisplayValues()[0]
+      .slice(0, expectedHeaders.length);
+    const matches = expectedHeaders.every(function (header, index) {
+      return existing[index] === header;
+    });
+    if (!matches) {
+      throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
+    }
+  });
 }
