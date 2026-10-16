@@ -381,13 +381,18 @@ function loginAccount_(input) {
   }
   if (!canAccountAuthenticate_(user)) return { ok: false, code: "INVALID_CREDENTIALS" };
   const session = createSession_(String(user.user_id));
-  updateSheetRowFields_(sheet, match.rowNumber, {
-    last_login_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    login_failed_count: 0,
-    login_locked_until: ""
-  });
-  appendAuditEvent_({ user_id: String(user.user_id), action: "login", outcome: "success", details: { session_id: session.session_id } });
+  try {
+    updateSheetRowFields_(sheet, match.rowNumber, {
+      last_login_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      login_failed_count: 0,
+      login_locked_until: ""
+    });
+    appendAuditEvent_({ user_id: String(user.user_id), action: "login", outcome: "success", details: { session_id: session.session_id } });
+  } catch (error) {
+    revokeSession_(session.token, "login_finalization_failed");
+    throw new Error("LOGIN_FINALIZATION_FAILED");
+  }
   return {
     ok: true,
     code: "LOGIN_SUCCESS",
@@ -516,6 +521,9 @@ function resetPassword_(input) {
 
     const hashed = hashPassword_(password);
     const nowIso = new Date(now).toISOString();
+    // Consume the one-time challenge before changing credentials. If a later
+    // write fails, the user can request a fresh code rather than replay this one.
+    consumeChallenge_(challenges, latest.rowNumber, nowIso);
     updateSheetRowFields_(users, match.rowNumber, {
       password_hash: hashed.hash,
       password_salt: hashed.salt,
@@ -526,7 +534,6 @@ function resetPassword_(input) {
       login_locked_until: "",
       updated_at: nowIso
     });
-    consumeChallenge_(challenges, latest.rowNumber, nowIso);
     revokeSessionsForUser_(user.user_id, "password_reset", nowIso);
     appendAuditEvent_({ user_id: String(user.user_id), action: "password_reset_completed", outcome: "success", details: {} });
     return { ok: true, code: "PASSWORD_RESET_COMPLETE" };
