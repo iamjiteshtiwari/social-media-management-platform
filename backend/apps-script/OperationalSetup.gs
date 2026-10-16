@@ -61,6 +61,7 @@ function initializeOperationalTestSchema() {
   );
   const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
   const schema = getOperationalSchema_();
+  validateSchemaCompatibility_(spreadsheet, schema);
 
   Object.keys(schema).forEach(function (sheetName) {
     const headers = schema[sheetName];
