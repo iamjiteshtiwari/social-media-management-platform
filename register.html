@@ -42,6 +42,14 @@
           <div class="form-field"><label for="register-confirm">Confirm password</label><input id="register-confirm" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Enter it again" required></div>
         </div>
         <label class="checkbox-label terms-check"><input type="checkbox" name="terms" required> I understand this is a preview and account creation is not active yet.</label>
+        <section class="captcha-preview captcha-widget" aria-labelledby="registration-captcha-title" data-captcha-purpose="registration">
+          <div class="captcha-preview__copy">
+            <strong id="registration-captcha-title">Security verification</strong>
+            <p>Complete the “I’m not a robot” check. Server-side verification will be connected during backend integration.</p>
+            <div class="g-recaptcha" data-sitekey="6LeoRfItAAAAAOhG-CqWBreOBqbS9nSwItgZ0cFE" data-theme="light"></div>
+            <span class="captcha-preview__status"><span aria-hidden="true"></span> Widget added · server verification pending</span>
+          </div>
+        </section>
         <button class="button-primary" type="submit">Continue to email verification <span aria-hidden="true">→</span></button>
         <p class="form-feedback" role="status" aria-live="polite"></p>
       </form>
