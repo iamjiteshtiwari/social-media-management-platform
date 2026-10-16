@@ -4,6 +4,7 @@
   /* Adapted from the public visual system of iamjiteshtiwari.in.
      Kept local to this repository; no live stylesheet dependency. */
   --color-page: #ffffff;
+  --color-header-bg: #eff6ff;
   --color-surface: #f3f8ff;
   --color-surface-soft: #dbeafe;
   --color-text: #102a43;
