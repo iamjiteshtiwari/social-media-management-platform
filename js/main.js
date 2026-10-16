@@ -5,6 +5,30 @@
  */
 "use strict";
 
+/* Apply the saved/system theme before first paint and update matching favicon variants. */
+(() => {
+  const root = document.documentElement;
+  let theme = "light";
+  try {
+    const saved = window.localStorage.getItem("smm-theme");
+    if (saved === "light" || saved === "dark") theme = saved;
+    else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) theme = "dark";
+  } catch (error) {
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) theme = "dark";
+  }
+  root.setAttribute("data-theme", theme);
+  root.style.colorScheme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#0b1220" : "#eff6ff");
+  const base = "https://iamjiteshtiwari.in/assets/favicon/Jitesh%20Tiwari%20(iamjiteshtiwari.in)%20Favicon%20";
+  document.querySelectorAll("[data-theme-favicon]").forEach((link) => {
+    const mode = link.getAttribute("data-theme-favicon");
+    const size = link.getAttribute("data-favicon-size") || "32x32";
+    link.href = base + size + (mode === "light" ? "%20-%20Light.png" : "%20Dark.png");
+    link.media = mode === theme ? "all" : "not all";
+  });
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
   const themeRoot = document.documentElement;
   const themeToggle = document.querySelector("[data-theme-toggle]");
