@@ -48,6 +48,7 @@ Set these only in the private Apps Script project under the personal account. Ne
 - `ENABLE_PUBLIC_REGISTRATION` = keep unset until API deployment, CAPTCHA, quota and browser transport are confirmed; set to `YES` only for an explicitly approved registration launch
 - `ENABLE_PUBLIC_RECOVERY` = keep unset until password recovery routes and browser transport are approved
 - `SESSION_HMAC_SECRET` = long random private value used to protect session credential verifiers
+- `SESSION_TOKEN_GENERATION_SECRET` = separate long random private value used to derive opaque session credentials with HMAC
 - `OPERATIONAL_TEST_SPREADSHEET_ID` = ID of the disposable work-owned operational test spreadsheet shared with the personal account
 - `RECAPTCHA_REGISTRATION_SECRET` = **rotated replacement secret**, entered directly in Apps Script
 - `RECAPTCHA_LOGIN_SECRET` = **rotated replacement secret**, entered directly in Apps Script if login has its own secret
