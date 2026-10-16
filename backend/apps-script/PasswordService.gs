@@ -29,7 +29,7 @@ function verifyPassword_(password, salt, expectedHash, algorithm, iterations) {
   if (String(algorithm || "") !== PASSWORD_HASH_ALGORITHM) return false;
   const rounds = Number(iterations);
   if (!Number.isInteger(rounds) || rounds < 100000 || rounds > 500000) return false;
-  if (!salt || !expectedHash || typeof password !== "string") return false;
+  if (!salt || !expectedHash || typeof password !== "string" || password.length < 1 || password.length > 256) return false;
 
   const derived = pbkdf2Sha256_(password, String(salt), rounds, PASSWORD_HASH_BYTES);
   const actual = Utilities.base64Encode(derived);
