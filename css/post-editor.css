@@ -31,3 +31,12 @@
 .social-preview-actions { display:flex; justify-content:space-around; gap:.5rem; padding-top:var(--space-3); color:var(--color-text-muted); font-size:.75rem; }
 @media(max-width:900px) { .post-editor-layout { grid-template-columns:1fr; } .post-preview-card { position:static; } }
 @media(max-width:520px) { .post-form-actions { display:grid; grid-template-columns:1fr 1fr; } .post-form-actions .button-primary { grid-column:1/-1; } .post-form-actions button { width:100%; } }
+
+/* Theme-aware component surfaces. */
+
+:root[data-theme="dark"] .post-form input:not([type=checkbox]),
+:root[data-theme="dark"] .post-form textarea,
+:root[data-theme="dark"] .post-form select { background: var(--color-page); color: var(--color-text); }
+:root[data-theme="dark"] .media-attach-button > span:first-child { background: var(--color-page); }
+:root[data-theme="dark"] .social-preview { background: var(--color-surface); }
+:root[data-theme="dark"] .social-preview-media { background: linear-gradient(145deg, #142238, #1d3555); }
