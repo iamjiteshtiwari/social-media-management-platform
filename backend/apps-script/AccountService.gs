@@ -70,8 +70,8 @@ function registerAccount_(input) {
       issueEmailVerificationOtp_(userId, data.email, data.fullName);
     } catch (error) {
       updateUserFieldsById_(userId, {
-        status: "registration_delivery_failed",
-        status_reason: "Verification email delivery failed",
+        status: ACCOUNT_STATUS.PENDING_EMAIL,
+        status_reason: "Verification email delivery failed; resend is available after cooldown",
         updated_at: new Date().toISOString()
       });
       appendAuditEvent_({
@@ -93,7 +93,6 @@ function registerAccount_(input) {
     return {
       ok: true,
       code: "VERIFICATION_REQUIRED",
-      userId: userId,
       nextStep: "verify_email"
     };
   } finally {
