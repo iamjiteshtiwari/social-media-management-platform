@@ -32,7 +32,7 @@ function revokeUserSessions_(userId,reason) {
   const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Sessions");if(sheet.getLastRow()<2)return 0;const headers=getHeaderMap_(sheet),rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues(),now=new Date().toISOString();let count=0;
   rows.forEach(function(values,index){const r=rowToRecord_(sheet,{values:values});if(String(r.user_id)!==String(userId)||r.revoked_at)return;setCellIfColumnExists_(sheet,index+2,headers,"revoked_at",now);setCellIfColumnExists_(sheet,index+2,headers,"revoke_reason",String(reason||"revoked").slice(0,80));count++;});return count;
 }
-function getUserById_(userId){const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Users"),found=findRecordByValue_(sheet,"user_id",String(userId));return found?rowToRecord_(sheet,found.values):null;}
+function getUserById_(userId){const sheet=getRequiredSheet_(getMasterSpreadsheet_(),"Users"),found=findRecordByValue_(sheet,"user_id",String(userId));return found?rowToRecord_(sheet,found):null;}
 
 function hmacBase64_(secret,message){return Utilities.base64Encode(Utilities.computeHmacSha256Signature(String(message),String(secret)));}
 function validateSessionToken_(token){return validateSession_(token);}
