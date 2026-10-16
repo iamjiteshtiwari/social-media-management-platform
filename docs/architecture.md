@@ -3,6 +3,10 @@
 ## Status
 This document describes the planning direction, not a deployed system. No production backend, Google Sheets, Google Drive, authentication, or social integration is created by this scaffold.
 
+## Current architecture decision
+
+Start with the existing two Google accounts and a Google-only backend: Google Apps Script for server-side logic, Google Sheets for structured records, and Google Drive for media. Do not add Cloudflare Workers or Supabase at this stage. Reconsider only when a measured test demonstrates a specific technical or operational blocker. Keep the code modular so a future API gateway or different database can be introduced behind adapters without rewriting frontend business logic.
+
 ## Proposed components
 - **Frontend:** separate static site using semantic HTML, custom CSS, and vanilla JavaScript.
 - **Backend candidate:** Google Apps Script web app.
