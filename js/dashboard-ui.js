@@ -10,17 +10,21 @@ document.addEventListener("DOMContentLoaded", () => {
       menuButton.setAttribute("aria-label", open ? "Open workspace menu" : "Close workspace menu");
       nav.classList.toggle("is-open", !open);
     });
-    nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => {
+    const closeMenu = (restoreFocus = false) => {
       menuButton.setAttribute("aria-expanded", "false");
       menuButton.setAttribute("aria-label", "Open workspace menu");
       nav.classList.remove("is-open");
-    }));
+      if (restoreFocus) menuButton.focus();
+    };
+    nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => closeMenu()));
+    document.addEventListener("click", (event) => {
+      if (nav.classList.contains("is-open") && !nav.contains(event.target) && !menuButton.contains(event.target)) closeMenu();
+    });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        menuButton.setAttribute("aria-expanded", "false");
-        menuButton.setAttribute("aria-label", "Open workspace menu");
-        nav.classList.remove("is-open");
-      }
+      if (event.key === "Escape" && nav.classList.contains("is-open")) closeMenu(true);
+    });
+    window.addEventListener("resize", () => {
+      if (window.matchMedia("(min-width: 761px)").matches) closeMenu();
     });
   }
 
@@ -93,4 +97,41 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   if (search) search.addEventListener("input", filterMedia);
   if (mediaType) mediaType.addEventListener("change", filterMedia);
+
+  const mediaGrid = document.querySelector(".media-library-grid");
+  if (mediaGrid && mediaItems.length) {
+    let empty = document.querySelector("#media-filter-empty");
+    if (!empty) {
+      empty = document.createElement("p");
+      empty.id = "media-filter-empty";
+      empty.className = "panel-muted";
+      empty.setAttribute("role", "status");
+      empty.textContent = "No media items match these filters.";
+      empty.hidden = true;
+      mediaGrid.insertAdjacentElement("afterend", empty);
+    }
+    const updateMediaEmptyState = () => {
+      empty.hidden = mediaItems.some((item) => !item.hidden);
+    };
+    const previousFilterMedia = filterMedia;
+    const filterMediaWithEmptyState = () => { previousFilterMedia(); updateMediaEmptyState(); };
+    if (search) {
+      search.removeEventListener("input", filterMedia);
+      search.addEventListener("input", filterMediaWithEmptyState);
+    }
+    if (mediaType) {
+      mediaType.removeEventListener("change", filterMedia);
+      mediaType.addEventListener("change", filterMediaWithEmptyState);
+    }
+    updateMediaEmptyState();
+  }
+  const resetMediaFilters = document.querySelector("[data-reset-media-filters]");
+  if (resetMediaFilters) resetMediaFilters.addEventListener("click", () => {
+    if (search) search.value = "";
+    if (mediaType) mediaType.value = "All files";
+    filterMedia();
+    const empty = document.querySelector("#media-filter-empty");
+    if (empty) empty.hidden = true;
+    announce("Media search and type filters have been reset. Sample items only.");
+  });
 });
