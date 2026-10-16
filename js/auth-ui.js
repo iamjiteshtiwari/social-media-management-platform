@@ -57,7 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (form.id === "reset-password-form") {
         feedback.textContent = "Design preview only: the reset code was not checked and your password was not changed.";
       } else if (confirm) {
-        feedback.textContent = "Design preview only: no account was created and no information was sent or saved.";
+        feedback.textContent = form.querySelector("[data-captcha-purpose]")
+          ? "Preview only: CAPTCHA was not verified, no account was created, and no information was sent or saved."
+          : "Design preview only: no account was created and no information was sent or saved.";
       } else if (form.querySelector("#recovery-email")) {
         feedback.textContent = "Design preview only: no recovery email was sent and no account was checked.";
       } else {
