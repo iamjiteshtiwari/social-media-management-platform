@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const axisLabels = chart ? [...chart.querySelectorAll(".chart-axis span")] : [];
     const updateReportRange = () => {
       const range = Number(reportRange.value);
-      const labels = range === 7 ? ["Day 1", "Day 4", "Day 7"] : range === 90 ? ["Month 1", "Month 2", "Month 3"] : ["Week 1", "Week 2", "Week 3", "Week 4"];
+      const labels = range === 7 ? ["Day 1", "Day 3", "Day 5", "Day 7"] : range === 90 ? ["Month 1", "Month 2", "Month 3", "Month 3 end"] : ["Week 1", "Week 2", "Week 3", "Week 4"];
       axisLabels.forEach((label, index) => { label.textContent = labels[index] || ""; });
       if (chart) chart.setAttribute("aria-label", "Illustrative sample engagement chart for the last " + range + " days");
       announce("Reporting period changed to the last " + range + " days. Charts and metrics remain illustrative sample data.");
