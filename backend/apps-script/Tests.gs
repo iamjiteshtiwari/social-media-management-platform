@@ -65,10 +65,19 @@ function runBackendSelfTests() {
   check("public health response does not claim production readiness", function () {
     const health = getPublicHealth_();
     return health.ok === true &&
-      health.status === "scaffold" &&
-      health.capabilities.registration === false &&
+      health.status === "source_scaffold" &&
       health.capabilities.login === false &&
-      health.capabilities.sessions === false;
+      health.capabilities.sessions === false &&
+      health.capabilities.accountAdministration === false;
+  });
+
+  check("account security policies match the agreed workflow", function () {
+    return EMAIL_OTP_TTL_MS === 5 * 60 * 1000 &&
+      EMAIL_OTP_MAX_ATTEMPTS === 5 &&
+      EMAIL_OTP_RESEND_COOLDOWN_MS === 60 * 1000 &&
+      SESSION_TTL_MS === 9 * 60 * 60 * 1000 &&
+      PASSWORD_HASH_ALGORITHM === "PBKDF2-HMAC-SHA256" &&
+      PASSWORD_HASH_ITERATIONS >= 100000;
   });
 
   const passed = results.filter(function (result) { return result.passed; }).length;
