@@ -157,3 +157,22 @@
 :root[data-theme="dark"] .status-pill--green { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .status-pill--red { border-color: #71383c; background: #3a2027; color: #ffb4bd; }
 :root[data-theme="dark"] .status-pill--blue { border-color: #29496f; background: #142a45; color: #c9defb; }
+
+
+/* Account management lifecycle preview */
+.account-management-table { min-width: 48rem; }
+.member-actions { display: flex; flex-wrap: wrap; gap: .4rem; min-width: 12rem; }
+.member-actions .button-secondary, .member-actions .button-danger { min-height: 2.25rem; padding: .45rem .65rem; font-size: .75rem; }
+.button-danger { display: inline-flex; align-items: center; justify-content: center; min-height: 2.5rem; padding: .6rem .8rem; border: 1px solid #b42318; border-radius: var(--radius-small); background: #b42318; color: #fff; cursor: pointer; font-size: var(--font-size-small); font-weight: 750; }
+.button-danger:hover { background: #912018; }
+.lifecycle-guidance { margin-top: var(--space-4); }
+.lifecycle-guidance ul { display: grid; gap: .75rem; padding-left: 1.2rem; color: var(--color-text-muted); font-size: var(--font-size-small); line-height: 1.6; }
+.lifecycle-guidance strong { color: var(--color-text); }
+.action-confirmation[hidden] { display: none; }
+.action-confirmation { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; }
+.action-confirmation__backdrop { position: absolute; inset: 0; background: rgb(15 23 42 / 58%); }
+.action-confirmation__dialog { position: relative; width: min(100%, 29rem); padding: clamp(1.25rem, 4vw, 2rem); border: 1px solid var(--color-border); border-radius: var(--radius-large); background: var(--color-surface); box-shadow: var(--shadow-panel); }
+.action-confirmation__dialog h2 { margin: .3rem 0 .65rem; font-size: 1.4rem; }
+.action-confirmation__dialog p:not(.eyebrow) { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: 1.6; }
+.action-confirmation__buttons { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .6rem; margin-top: var(--space-5); }
+@media(max-width: 600px) { .action-confirmation__buttons { display: grid; grid-template-columns: 1fr; }.action-confirmation__buttons > button { width: 100%; } }
