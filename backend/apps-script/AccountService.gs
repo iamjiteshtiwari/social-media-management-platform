@@ -235,12 +235,13 @@ function issueEmailVerificationOtp_(userId, email, fullName) {
 
   // UUID digits provide a non-sequential code; the code is never persisted.
   const otp = String(parseInt(Utilities.getUuid().replace(/-/g, "").slice(0, 12), 16) % 1000000).padStart(6, "0");
+  const challengeId = Utilities.getUuid();
 
   appendRecord_(challenges, {
-    challenge_id: Utilities.getUuid(),
+    challenge_id: challengeId,
     user_id: userId,
     challenge_type: "email_verification",
-    verifier_hash: hashOtp_(otp),
+    verifier_hash: hashOtp_(otp, challengeId, userId),
     expires_at: new Date(now.getTime() + EMAIL_OTP_TTL_MS).toISOString(),
     attempt_count: 0,
     max_attempts: EMAIL_OTP_MAX_ATTEMPTS,
