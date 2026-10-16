@@ -44,6 +44,7 @@ Set these only in the private Apps Script project under the personal account. Ne
 - `OTP_HMAC_SECRET` = long random private value used to protect low-entropy OTP verifiers
 - `ENABLE_PUBLIC_REGISTRATION` = leave unset until the owner explicitly enables public registration after private configuration and transport checks
 - `SESSION_HMAC_SECRET` = long random private value used to protect session credential verifiers
+- `SESSION_TOKEN_GENERATION_SECRET` = separate long random private value used to derive unpredictable opaque session credentials
 - `ENABLE_PUBLIC_LOGIN` = reserved feature gate; login remains unavailable through the public API until secure session transport is selected
 - `OPERATIONAL_TEST_SPREADSHEET_ID` = ID of the disposable work-owned operational test spreadsheet shared with the personal account
 - `RECAPTCHA_REGISTRATION_SECRET` = **rotated replacement secret**, entered directly in Apps Script
