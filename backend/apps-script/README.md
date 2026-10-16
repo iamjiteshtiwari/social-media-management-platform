@@ -22,6 +22,9 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 
 - `Api.gs`: small request entry point and safe response contract.
 - `Config.gs`: server-side Script Properties access.
+- `PasswordService.gs`: server-side PBKDF2-HMAC-SHA-256 password hashing and verification.
+- `AccountService.gs`: registration validation, server-side CAPTCHA gate, latest-only email OTP, resend cooldown, attempt/expiry enforcement, email verification, and pending-approval transition.
+- `SessionService.gs`: planned next module for the fixed nine-hour, single-active-session lifecycle; public browser transport remains gated.
 - `CaptchaService.gs`: server-side Google reCAPTCHA verification for registration/login.
 - `Schema.gs`: versioned master and operational sheet column definitions.
 - `SheetRepository.gs`: spreadsheet access and safe header/record helpers.
@@ -37,6 +40,8 @@ Set these only in the private Apps Script project under the personal account. Ne
 
 - `APP_ALLOWED_HOSTNAME` = `social.iamjiteshtiwari.in`
 - `MASTER_SPREADSHEET_ID` = ID of the personal-account master spreadsheet
+- `OTP_HMAC_SECRET` = long random private value used to protect low-entropy OTP verifiers
+- `SESSION_HMAC_SECRET` = long random private value used to protect session credential verifiers
 - `OPERATIONAL_TEST_SPREADSHEET_ID` = ID of the disposable work-owned operational test spreadsheet shared with the personal account
 - `RECAPTCHA_REGISTRATION_SECRET` = **rotated replacement secret**, entered directly in Apps Script
 - `RECAPTCHA_LOGIN_SECRET` = **rotated replacement secret**, entered directly in Apps Script if login has its own secret
@@ -91,4 +96,4 @@ Before connecting registration/login, demonstrate a supported, secure transport 
 
 ## Current implementation boundary
 
-This source includes configuration access, CAPTCHA verification, schema definitions, repository helpers and a non-sensitive health response. It does not yet create any Google resources, deploy Apps Script, send emails, authenticate users, create sessions, upload media, connect social networks, schedule posts, or publish content. Those require explicit setup, credentials, and tests.
+The source now includes configuration access, CAPTCHA verification, versioned schemas, repository helpers, server-side password hashing, and registration/email-OTP workflow code. The new account modules are source-only and have not been run in the live Apps Script environment. No Google resources have been created or changed, no email has been sent, and no web app has been deployed. Session creation, login routing, logout, admin lifecycle actions, and frontend transport are the next account-phase work; social integrations and post structure remain later phases. Those require explicit setup, credentials, and tests.
