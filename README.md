@@ -15,6 +15,6 @@ The following static pages are part of the design review stage:
 - `dashboard.html` — workspace overview
 - `brand-management.html` — brands and accounts
 - `content-planner.html` — calendar preview
-- `media-library.html` — media library
+- `media-library.html` — media library\n- `post-editor.html` — composer and local-only post preview
 
 All account, calendar and media actions are prototypes only. They do not transmit or persist form data, send email, authenticate a user, upload files, connect a social account, or publish content. Real integration begins only after visual review. The main portfolio repository is separate and must not be modified.
