@@ -40,6 +40,15 @@ function doPost(e) {
       return jsonResponse_(resendRegistrationEmailOtp_(normalizeCaptchaField_(payload)));
     }
 
+    if (action === "requestPasswordReset" || action === "resetPassword") {
+      if (getPrivateProperty_(AppConfig.PROPERTY.ENABLE_PUBLIC_RECOVERY) !== "YES") {
+        return jsonResponse_({ ok: false, code: "RECOVERY_NOT_ENABLED", message: "Password recovery is not available yet." });
+      }
+      return jsonResponse_(action === "requestPasswordReset"
+        ? requestPasswordReset_(normalizeCaptchaField_(payload))
+        : resetPassword_(normalizeCaptchaField_(payload)));
+    }
+
     if (action === "login" || action === "logout" || action === "getSession" ||
         action === "deleteOwnAccount" || action === "adminApproveUser" ||
         action === "adminSetAccountStatus") {
