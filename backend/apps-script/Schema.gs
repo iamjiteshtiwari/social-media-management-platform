@@ -2,8 +2,9 @@
  * Versioned data contracts. These definitions do not create spreadsheets
  * or tabs by themselves.
  *
- * Do not add passwords, raw session tokens, OAuth tokens, CAPTCHA secrets,
- * or provider refresh tokens to these schemas.
+ * Never store plaintext passwords, raw session tokens, OAuth tokens, CAPTCHA
+ * secrets, OTP values, or provider refresh tokens. Password hash fields contain
+ * only the output of the configured password-hashing adapter.
  */
 const MASTER_SCHEMA_VERSION = 1;
 
@@ -11,8 +12,10 @@ function getMasterSchema_() {
   return {
     Users: [
       "user_id", "auth_provider", "auth_subject", "full_name", "username",
-      "email_normalized", "phone", "role", "status", "email_verified_at",
-      "approved_at", "created_at", "updated_at", "last_login_at"
+      "email_normalized", "phone", "password_hash", "password_salt",
+      "password_hash_algorithm", "password_hash_iterations", "password_changed_at",
+      "role", "status", "status_reason", "email_verified_at", "approved_at",
+      "suspended_at", "disabled_at", "deleted_at", "created_at", "updated_at", "last_login_at"
     ],
     ResourceMap: [
       "mapping_id", "user_id", "resource_type", "resource_id",
@@ -21,6 +24,11 @@ function getMasterSchema_() {
     Sessions: [
       "session_id", "user_id", "credential_verifier", "issued_at",
       "expires_at", "revoked_at", "revoke_reason", "created_at"
+    ],
+    AuthChallenges: [
+      "challenge_id", "user_id", "challenge_type", "verifier_hash",
+      "expires_at", "attempt_count", "max_attempts", "last_sent_at",
+      "consumed_at", "created_at"
     ],
     AuditLog: [
       "event_id", "user_id", "action", "outcome", "occurred_at",
