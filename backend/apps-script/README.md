@@ -23,7 +23,7 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `Api.gs`: small request entry point and safe response contract.
 - `Config.gs`: server-side Script Properties access.
 - `PasswordService.gs`: server-side PBKDF2-HMAC-SHA-256 password hashing and verification.
-- `AccountService.gs`: registration, server-side CAPTCHA checks, email OTP verification/resend, login service logic, logout and current-session service functions.
+- `AccountService.gs`: registration, server-side CAPTCHA checks, email OTP verification/resend, login service logic, logout/current-session functions, and password recovery. Repeated invalid passwords trigger a 15-minute account lockout after five failures.
 - `SessionService.gs`: fixed nine-hour absolute session expiry, one active session per user, verifier-only session storage, logout and revocation helpers.
 - `AccountAdminService.gs`: pending-account approval, suspend/disable/reactivate controls, session revocation and owner-requested account deletion with profile anonymization.
 - `CaptchaService.gs`: server-side Google reCAPTCHA verification for registration/login.
