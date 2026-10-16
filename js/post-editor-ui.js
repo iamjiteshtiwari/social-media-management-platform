@@ -21,6 +21,35 @@ document.addEventListener("DOMContentLoaded", () => {
   [brand,platform].forEach((el) => el?.addEventListener("change", render));
   render();
   const form = document.querySelector("[data-post-preview-form]");
+  document.querySelectorAll("[data-preview-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (feedback) {
+        feedback.classList.remove("is-error");
+        const action = button.dataset.previewAction;
+        if (action === "Schedule post") {
+          const schedule = document.querySelector("#post-schedule");
+          if (!schedule || !schedule.value) {
+            feedback.textContent = "Choose a date and time to preview the scheduling step. Nothing has been scheduled.";
+            feedback.classList.add("is-error");
+            schedule?.focus();
+            return;
+          }
+          const chosen = new Date(schedule.value);
+          if (Number.isNaN(chosen.getTime()) || chosen.getTime() <= Date.now()) {
+            feedback.textContent = "Choose a future date and time to preview scheduling. Nothing has been scheduled.";
+            feedback.classList.add("is-error");
+            schedule?.focus();
+            return;
+          }
+          feedback.textContent = "Schedule preview ready for " + chosen.toLocaleString() + ". No post was saved or scheduled.";
+        } else if (action === "Save draft") {
+          feedback.textContent = "Draft preview updated locally for this page only. No draft was saved.";
+        } else {
+          feedback.textContent = action + " is a visual prototype. No file was uploaded or connected.";
+        }
+      }
+    });
+  });
   if (form) form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (feedback) {
