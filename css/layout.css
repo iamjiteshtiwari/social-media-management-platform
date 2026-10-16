@@ -540,3 +540,21 @@
 @media (max-width: 380px) {
   .account-popover { right: 0.5rem; width: min(19rem, calc(100vw - 1rem)); }
 }
+
+
+/* Visual prototype QA refinements: account popup placement and modal scrolling. */
+.account-popover {
+  top: calc(3.45rem + 0.35rem);
+  max-height: calc(100dvh - 4.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (min-width: 761px) {
+  .account-popover { top: calc(3.75rem + 0.35rem); }
+}
+body.modal-open {
+  overflow: hidden;
+}
+.destination-modal__dialog {
+  overscroll-behavior: contain;
+}
