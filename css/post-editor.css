@@ -1,0 +1,33 @@
+.post-editor-layout { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(18rem,.85fr); align-items:start; gap:var(--space-4); }
+.post-form-card { margin-top:0; }
+.post-form { display:grid; gap:var(--space-4); }
+.post-form .form-field { display:grid; gap:.4rem; }
+.post-form .form-field>label { color:var(--color-text); font-size:var(--font-size-small); font-weight:750; }
+.post-form input:not([type=checkbox]),.post-form textarea,.post-form select { width:100%; min-height:2.8rem; padding:.65rem .75rem; border:1px solid var(--color-border); border-radius:var(--radius-small); background:#fff; color:var(--color-text); font:inherit; }
+.post-form textarea { min-height:10rem; resize:vertical; line-height:1.55; }
+.post-form input:focus,.post-form textarea:focus,.post-form select:focus { outline:3px solid var(--color-primary-soft); border-color:var(--color-primary); }
+.field-meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.25rem .75rem; color:var(--color-text-subtle); font-size:.72rem; }
+.field-meta b { color:var(--color-text-muted); }
+.media-attach-button { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3); border:1px dashed var(--color-border); border-radius:var(--radius-small); background:var(--color-surface); color:var(--color-primary); text-align:left; cursor:pointer; }
+.media-attach-button>span:first-child { display:grid; width:2rem; height:2rem; place-items:center; border-radius:var(--radius-small); background:#fff; font-size:1.4rem; }
+.media-attach-button strong,.media-attach-button small { display:block; }
+.media-attach-button strong { color:var(--color-text); font-size:var(--font-size-small); }
+.media-attach-button small { margin-top:.15rem; color:var(--color-text-subtle); font-size:.75rem; }
+.post-form-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:var(--space-2); padding-top:var(--space-3); border-top:1px solid var(--color-border); }
+.post-preview-card { position:sticky; top:5.25rem; margin-top:0; }
+.social-preview { margin-top:var(--space-4); padding:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-medium); background:#fff; }
+.social-preview-head { display:flex; align-items:center; gap:var(--space-2); }
+.social-preview-avatar { display:grid; width:2.4rem; height:2.4rem; flex:0 0 auto; place-items:center; border-radius:50%; background:var(--color-primary-soft); color:var(--color-primary); font-size:.75rem; font-weight:800; }
+.social-preview-head>div { display:grid; min-width:0; gap:.1rem; }
+.social-preview-head strong { overflow-wrap:anywhere; color:var(--color-text); font-size:var(--font-size-small); }
+.social-preview-head small { color:var(--color-text-subtle); font-size:.72rem; }
+.preview-menu { margin-left:auto; color:var(--color-text-subtle); }
+.social-preview-caption { margin:var(--space-3) 0; color:var(--color-text); font-size:var(--font-size-small); white-space:pre-wrap; overflow-wrap:anywhere; }
+.social-preview-tags { margin:0 0 var(--space-3); color:var(--color-primary); font-size:var(--font-size-small); overflow-wrap:anywhere; }
+.social-preview-media { display:grid; min-height:11rem; align-content:center; justify-items:center; gap:.35rem; border:1px dashed var(--color-border); border-radius:var(--radius-small); background:linear-gradient(145deg,#f8fbff,#eaf2ff); color:var(--color-primary); }
+.social-preview-media>span { font-size:2rem; }
+.social-preview-media p { margin:0; color:var(--color-text-muted); font-size:var(--font-size-small); }
+.social-preview-media small { color:var(--color-text-subtle); font-size:.72rem; }
+.social-preview-actions { display:flex; justify-content:space-around; gap:.5rem; padding-top:var(--space-3); color:var(--color-text-muted); font-size:.75rem; }
+@media(max-width:900px) { .post-editor-layout { grid-template-columns:1fr; } .post-preview-card { position:static; } }
+@media(max-width:520px) { .post-form-actions { display:grid; grid-template-columns:1fr 1fr; } .post-form-actions .button-primary { grid-column:1/-1; } .post-form-actions button { width:100%; } }
