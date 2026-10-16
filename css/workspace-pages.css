@@ -117,3 +117,6 @@
 @media(max-width:900px) { .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.analytics-grid { grid-template-columns:1fr; } }
 @media(max-width:760px) { .workspace-heading { align-items:stretch; flex-direction:column; }.workspace-heading>.button-primary { width:100%; }.panel-section { padding:var(--space-3); }.integration-grid { grid-template-columns:1fr; }.integration-card { grid-template-columns:auto minmax(0,1fr); }.integration-card .status-pill { grid-column:2; }.integration-card .button-secondary { grid-column:2; }.queue-toolbar { align-items:stretch; flex-direction:column; }.queue-toolbar input { width:100%; }.notification-item { grid-template-columns:auto minmax(0,1fr); }.notification-item>button,.notification-item>.read-label { grid-column:2; justify-self:start; }.workspace-heading .toolbar-actions { display:grid; grid-template-columns:1fr; } }
 @media(max-width:420px) { .summary-grid .metric-card { padding:var(--space-3); }.summary-grid .metric-card strong { font-size:1.5rem; }.filter-tab { padding:.4rem .55rem; }.data-table th,.data-table td { padding:.7rem .55rem; } }
+
+.toolbar-actions { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); }
+@media(max-width:760px) { .toolbar-actions { align-items:stretch; }.toolbar-actions .button-primary,.toolbar-actions .button-secondary { min-height:2.75rem; } }
