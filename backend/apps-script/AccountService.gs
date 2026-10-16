@@ -64,7 +64,9 @@ function registerAccount_(input) {
       deleted_at: "",
       created_at: now,
       updated_at: now,
-      last_login_at: ""
+      last_login_at: "",
+      login_failed_count: 0,
+      login_locked_until: ""
     });
 
     try {
@@ -362,6 +364,10 @@ function loginAccount_(input) {
     return { ok: false, code: "INVALID_CREDENTIALS" };
   }
   const user = rowToRecord_(sheet, match);
+  const lockUntil = Date.parse(user.login_locked_until || "");
+  if (Number.isFinite(lockUntil) && Date.now() < lockUntil) {
+    return { ok: false, code: "INVALID_CREDENTIALS" };
+  }
   const validPassword = verifyPassword_(
     String((input && input.password) || ""),
     String(user.password_salt || ""),
@@ -369,11 +375,18 @@ function loginAccount_(input) {
     String(user.password_hash_algorithm || ""),
     Number(user.password_hash_iterations)
   );
-  if (!validPassword || !canAccountAuthenticate_(user)) {
+  if (!validPassword) {
+    recordLoginFailure_(match.rowNumber);
     return { ok: false, code: "INVALID_CREDENTIALS" };
   }
+  if (!canAccountAuthenticate_(user)) return { ok: false, code: "INVALID_CREDENTIALS" };
   const session = createSession_(String(user.user_id));
-  updateSheetRowFields_(sheet, match.rowNumber, { last_login_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+  updateSheetRowFields_(sheet, match.rowNumber, {
+    last_login_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    login_failed_count: 0,
+    login_locked_until: ""
+  });
   appendAuditEvent_({ user_id: String(user.user_id), action: "login", outcome: "success", details: { session_id: session.session_id } });
   return {
     ok: true,
@@ -515,6 +528,24 @@ function resetPassword_(input) {
     revokeSessionsForUser_(user.user_id, "password_reset", nowIso);
     appendAuditEvent_({ user_id: String(user.user_id), action: "password_reset_completed", outcome: "success", details: {} });
     return { ok: true, code: "PASSWORD_RESET_COMPLETE" };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function recordLoginFailure_(userRowNumber) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  try {
+    const users = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
+    const values = users.getRange(userRowNumber, 1, 1, users.getLastColumn()).getValues()[0];
+    const user = rowToRecord_(users, { values: values });
+    const attempts = Number(user.login_failed_count || 0) + 1;
+    const now = Date.now();
+    const fields = { login_failed_count: attempts, updated_at: new Date(now).toISOString() };
+    if (attempts >= 5) fields.login_locked_until = new Date(now + 15 * 60 * 1000).toISOString();
+    updateSheetRowFields_(users, userRowNumber, fields);
+    appendAuditEvent_({ user_id: String(user.user_id), action: "login_failed", outcome: "rejected", details: { attempts: attempts, locked: attempts >= 5 } });
   } finally {
     lock.releaseLock();
   }
