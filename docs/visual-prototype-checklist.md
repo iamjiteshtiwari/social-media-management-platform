@@ -2,42 +2,35 @@
 
 ## Goal
 
-Complete the visual experience and local-only interactions across the planned social media management workflows before beginning service integration.
+Finish and QA the complete visual prototype before starting backend/service integration. Continue from the current `JTCodes` branch and reuse the existing custom CSS system; do not recreate or duplicate pages.
 
-## Current visual page inventory
+## Existing page inventory — built, pending QA
 
 - [x] Platform overview and feature entry points
-- [x] Registration form layout and client-side field validation
-- [x] Sign-in layout and password visibility control
-- [x] Password recovery layout
-- [x] Email OTP entry layout
-- [x] Pending administrator approval state
-- [x] Dashboard and summary cards
-- [x] Brand management empty state and workflow explanation
-- [x] Social account integration catalogue
-- [x] Post editor with caption, hashtags, brand/platform selection, schedule input and local preview
-- [x] Calendar planner with month navigation
-- [x] Publishing queue with sample statuses, filtering and search
-- [x] Media library with sample items and type/search filtering
-- [x] Analytics and reports with illustrative charts and tables
-- [x] Notifications with filters and local read-state interactions
-- [x] Account settings preview
-- [x] Administrator approval queue concept with local sample review controls
+- [x] Registration, sign-in, password recovery, email OTP and pending approval pages
+- [x] Dashboard and account settings preview
+- [x] Brand management and social account catalogue
+- [x] Post editor and calendar/content planner
+- [x] Publishing queue, media library, analytics and notifications
+- [x] Administrator approval queue concept
 - [x] Shared header, account popup, logo destination popup and footer
 
-## Local-only behavior
+## QA fixes to address
 
-The prototype may change its own visible state to demonstrate a workflow, but must never imply that a real account, post, notification, approval, upload, social connection or report was saved or sent. All example users, metrics, posts, connections and notification records are fictitious.
+- [ ] Verify all page navigation is routed to actual HTML pages where appropriate; remove placeholder anchors that do not represent a real destination.
+- [ ] Test account popup and logo destination modal on desktop and mobile, including click, outside click, Escape dismissal, keyboard focus and scrolling.
+- [ ] Validate the workspace navigation on all page types and screen sizes.
+- [ ] Check registration, sign-in, password recovery and OTP client-side validation and feedback, while keeping every action explicitly preview-only.
+- [ ] Check date/time validation and calendar month navigation.
+- [ ] Check filtering, searching, read state and approval sample actions.
+- [ ] Verify mobile, tablet and desktop layouts; horizontal table scrolling; long text; chart and calendar overflow.
+- [ ] Check keyboard navigation, focus visibility, accessible names, labels, duplicate IDs, broken links, missing assets, JavaScript syntax errors and console errors.
+- [ ] Inspect the deployed app in a working browser before claiming browser QA or deployment verification.
 
-## Remaining visual QA
+## Local-only behavior boundary
 
-- Review each page at narrow mobile, large mobile, tablet and desktop widths.
-- Check keyboard navigation, focus visibility, escape/outside-click dismissal and accessible names.
-- Check each navigation link, empty state, filter, validation message, popup and action feedback.
-- Confirm date/time controls, long content, table overflow and responsive chart behavior.
-- Check for broken links, missing assets, duplicate IDs, missing labels, console errors and JavaScript syntax errors.
-- Inspect the deployed app in a working browser before marking browser QA or deployment verified.
+Every action must remain local-only and clearly identified as a prototype. Never imply that a real account, post, notification, approval, upload, social connection or report was saved, sent, verified or published. Sample users, posts, metrics, connections and notifications are fictitious.
 
 ## Integration boundary
 
-No backend, real authentication, email delivery, data persistence, file upload, OAuth, scheduling, analytics API or publishing is active. Start service integration only after the visual pages have been reviewed and approved. Keep the portfolio website and its repository read-only and out of scope.
+No backend, real authentication, email delivery, persistence, file upload, OAuth, scheduling, analytics API or publishing is active. Do not begin service integration until all visual pages have been checked and reviewed. Keep the main portfolio website and its repository out of scope and untouched.
