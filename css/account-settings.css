@@ -26,3 +26,5 @@
 /* Theme-aware component surfaces. */
 
 :root[data-theme="dark"] .settings-layout .workspace-card { background: var(--color-surface); }
+
+:root[data-theme="dark"] .settings-form input { background: var(--color-page); color: var(--color-text); }
