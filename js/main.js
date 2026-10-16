@@ -6,6 +6,58 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
+  const themeRoot = document.documentElement;
+  const themeToggle = document.querySelector("[data-theme-toggle]");
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  const themeStorageKey = "smm-theme";
+  const faviconBase = "https://iamjiteshtiwari.in/assets/favicon/Jitesh%20Tiwari%20(iamjiteshtiwari.in)%20Favicon%20";
+
+  const applyTheme = (theme, persist = false) => {
+    const safeTheme = theme === "dark" ? "dark" : "light";
+    themeRoot.setAttribute("data-theme", safeTheme);
+    themeRoot.style.colorScheme = safeTheme;
+    if (themeColorMeta) themeColorMeta.setAttribute("content", safeTheme === "dark" ? "#0b1220" : "#eff6ff");
+    document.querySelectorAll("[data-theme-favicon]").forEach((link) => {
+      const mode = link.getAttribute("data-theme-favicon");
+      const size = link.getAttribute("data-favicon-size") || "32x32";
+      link.href = faviconBase + size + (mode === "light" ? "%20-%20Light.png" : "%20Dark.png");
+      link.media = mode === safeTheme ? "all" : "not all";
+    });
+    if (themeToggle) {
+      const nextTheme = safeTheme === "dark" ? "light" : "dark";
+      themeToggle.setAttribute("aria-label", "Switch to " + nextTheme + " theme");
+      themeToggle.setAttribute("title", "Switch to " + nextTheme + " theme");
+      themeToggle.setAttribute("aria-pressed", String(safeTheme === "dark"));
+    }
+    if (persist) {
+      try { window.localStorage.setItem(themeStorageKey, safeTheme); } catch (error) { /* Theme still works for this page. */ }
+    }
+  };
+
+  let initialTheme = themeRoot.getAttribute("data-theme");
+  try {
+    const savedTheme = window.localStorage.getItem(themeStorageKey);
+    if (savedTheme === "light" || savedTheme === "dark") initialTheme = savedTheme;
+  } catch (error) { /* Fall back to the current system preference. */ }
+  if (initialTheme !== "light" && initialTheme !== "dark") {
+    initialTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  applyTheme(initialTheme);
+  if (themeToggle) themeToggle.addEventListener("click", () => {
+    applyTheme(themeRoot.getAttribute("data-theme") === "dark" ? "light" : "dark", true);
+  });
+  if (window.matchMedia) {
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const followSystem = () => {
+      try {
+        if (window.localStorage.getItem(themeStorageKey)) return;
+      } catch (error) { /* Continue following the system theme. */ }
+      applyTheme(systemTheme.matches ? "dark" : "light");
+    };
+    if (systemTheme.addEventListener) systemTheme.addEventListener("change", followSystem);
+    else if (systemTheme.addListener) systemTheme.addListener(followSystem);
+  }
+
   const status = document.querySelector("#app-status");
   if (status) status.textContent = "Frontend scaffold loaded";
 
