@@ -64,8 +64,11 @@ function recordPublishingOutcome_(workbook, targetId, outcome, nowIso) {
 
     const target = rowToRecord_(targets, targetMatch);
     const currentStatus = String(target.platform_status || "").toLowerCase();
-    if (["pending", "publishing"].indexOf(currentStatus) < 0) {
-      throw new Error("POST_TARGET_NOT_IN_PROGRESS");
+    // Outcomes may be recorded only for a claimed target. Requiring the
+    // publishing state prevents an unclaimed pending row from being marked
+    // published or failed by a direct internal call.
+    if (currentStatus !== "publishing") {
+      throw new Error("POST_TARGET_NOT_CLAIMED");
     }
 
     const currentAttemptCount = Number(target.attempt_count || 0);
@@ -175,6 +178,7 @@ function testPublishingOutcomeLifecycle() {
   const testPostId = "TEST_POST_" + Utilities.getUuid();
   const cleanupErrors = [];
   const checks = {
+    pendingOutcomeRejected: false,
     retryScheduled: false,
     successRecorded: false,
     terminalFailureRecorded: false
@@ -202,6 +206,16 @@ function testPublishingOutcomeLifecycle() {
     appendSyntheticTarget(terminalTargetId);
 
     const start = Date.now();
+    try {
+      recordPublishingOutcome_(workbook, retryTargetId, {
+        success: true,
+        platform_post_id: "SHOULD_NOT_BE_ACCEPTED"
+      }, new Date(start).toISOString());
+    } catch (error) {
+      checks.pendingOutcomeRejected = String(error && error.message || "") === "POST_TARGET_NOT_CLAIMED";
+    }
+    const retryTargetMatchBeforeClaim = findRecordByValue_(targets, "target_id", retryTargetId);
+    updateSheetRowFields_(targets, retryTargetMatchBeforeClaim.rowNumber, { platform_status: "publishing" });
     const first = recordPublishingOutcome_(workbook, retryTargetId, {
       success: false,
       retryable: true,
@@ -223,6 +237,8 @@ function testPublishingOutcomeLifecycle() {
       Number(firstLog.retry_count) === 0;
 
     const successTime = Date.parse(first.next_retry_at) + 1000;
+    const retryTargetMatchBeforeSecondAttempt = findRecordByValue_(targets, "target_id", retryTargetId);
+    updateSheetRowFields_(targets, retryTargetMatchBeforeSecondAttempt.rowNumber, { platform_status: "publishing" });
     const second = recordPublishingOutcome_(workbook, retryTargetId, {
       success: true,
       platform_post_id: "TEST_PLATFORM_POST_ONLY",
@@ -242,6 +258,8 @@ function testPublishingOutcomeLifecycle() {
       secondLog && String(secondLog.result_status) === "success" &&
       Number(secondLog.retry_count) === 1;
 
+    const terminalTargetMatchBeforeAttempt = findRecordByValue_(targets, "target_id", terminalTargetId);
+    updateSheetRowFields_(targets, terminalTargetMatchBeforeAttempt.rowNumber, { platform_status: "publishing" });
     const terminal = recordPublishingOutcome_(workbook, terminalTargetId, {
       success: false,
       retryable: false,
