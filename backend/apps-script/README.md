@@ -38,6 +38,7 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `OperationalSetup.gs`: read-only cross-account access check and explicitly gated initialization for a disposable work-owned operational test sheet.
 - `MaintenanceService.gs`: manual-only, opt-in 30-day media cleanup preview/execution; protects media referenced by posts and never deletes external social content.
 - `OperationalService.gs`: internal business rules for user-owned brands and posts, schedule validation, soft deletion, and cancellation of queued post targets.
+- `MediaService.gs`: size-limited uploads to each user's mapped Drive media folder, MediaLibrary registration, and guarded deletion of unreferenced media.
 
 Keep modules independent so future providers, social networks, queues, and storage adapters can be added without rewriting the request router.
 
