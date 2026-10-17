@@ -24,14 +24,25 @@ Use the existing personal and work Google accounts. Do not create a Cloudflare o
 
 ## Phase B — Add source code
 
-Copy each file from `backend/apps-script/` into the matching file in the test Apps Script project:
+Copy each existing source module from `backend/apps-script/` into a matching file in the test Apps Script project:
 - [ ] `Api.gs`
 - [ ] `Config.gs`
-- [ ] `CaptchaService.gs`
 - [ ] `Schema.gs`
 - [ ] `SheetRepository.gs`
+- [ ] `CaptchaService.gs`
+- [ ] `PasswordService.gs`
+- [ ] `AccountService.gs`
+- [ ] `RegistrationService.gs`
+- [ ] `OtpService.gs`
+- [ ] `LoginService.gs`
+- [ ] `PasswordRecoveryService.gs`
+- [ ] `SessionService.gs`
+- [ ] `AccountAdminService.gs`
 - [ ] `HealthService.gs`
-- [ ] `Tests.gs)
+- [ ] `OperationalSetup.gs`
+- [ ] `Tests.gs`
+
+`MaintenanceService.gs` is not present yet; do not invent or paste a substitute. Complete and verify that module as a separate task.
 
 Do not paste any secret into code, GitHub, Notion, or chat.
 
