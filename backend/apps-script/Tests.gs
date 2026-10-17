@@ -1,42 +1,53 @@
 /**
  * Safe local self-tests. These tests do not create Google resources, call
- * providers, write to Sheets, or require any private credentials.
- * Run runBackendSelfTests manually in the Apps Script editor after importing.
+ * providers, write to Sheets, or require private credentials.
+ * Run runBackendSelfTests manually in the Apps Script editor after import.
  */
 function runBackendSelfTests() {
   const results = [];
   const check = function (name, fn) {
     try {
-      const passed = fn() === true;
-      results.push({ name: name, passed: passed });
+      results.push({ name: name, passed: fn() === true });
     } catch (error) {
       results.push({ name: name, passed: false, error: "TEST_FAILED" });
     }
   };
 
-  check("master schemas have unique non-empty headers", function () {
+  check("master schema contains the canonical and supporting tabs", function () {
     const schema = getMasterSchema_();
-    return Object.keys(schema).length >= 4 &&
-      Object.keys(schema).every(function (name) {
-        const headers = schema[name];
-        return Array.isArray(headers) && headers.length > 0 &&
-          headers.every(function (header) { return typeof header === "string" && header.length > 0; }) &&
-          new Set(headers).size === headers.length;
+    const expected = [
+      "Users", "UserResources", "SocialConnections", "AppConfig",
+      "AuthRecords", "AuditLogs", "Sessions", "AuthChallenges"
+    ];
+    return expected.length === Object.keys(schema).length &&
+      expected.every(function (name) {
+        return Array.isArray(schema[name]) && schema[name].length > 0;
       });
   });
 
-  check("operational schema includes the seven planned tabs", function () {
-    const schema = getOperationalSchema_();
-    const expected = [
-      "Brands", "SocialAccounts", "Content", "PublishingQueue",
-      "PublishingLogs", "MediaLibrary", "Notifications"
-    ];
-    return expected.every(function (name) {
-      return Array.isArray(schema[name]) && schema[name].length > 0;
-    }) && Object.keys(schema).length === expected.length;
+  check("all master schema headers are unique and non-empty", function () {
+    const schema = getMasterSchema_();
+    return Object.keys(schema).every(function (name) {
+      const headers = schema[name];
+      return headers.every(function (header) {
+        return typeof header === "string" && header.length > 0;
+      }) && new Set(headers).size === headers.length;
+    });
   });
 
-  check("operational schema preview matches the operational contract", function () {
+  check("operational schema matches the seven approved tabs", function () {
+    const schema = getOperationalSchema_();
+    const expected = [
+      "Brands", "Posts", "PostTargets", "MediaLibrary",
+      "PostMedia", "PublishingLogs", "Settings"
+    ];
+    return expected.length === Object.keys(schema).length &&
+      expected.every(function (name) {
+        return Array.isArray(schema[name]) && schema[name].length > 0;
+      });
+  });
+
+  check("operational preview reflects the canonical contract version", function () {
     const preview = previewOperationalSchema();
     return preview.version === MASTER_SCHEMA_VERSION &&
       preview.sheets.length === Object.keys(getOperationalSchema_()).length &&
@@ -45,24 +56,34 @@ function runBackendSelfTests() {
       });
   });
 
-  check("user schema does not store raw passwords or provider tokens", function () {
-    const headers = getMasterSchema_().Users.map(function (header) {
-      return header.toLowerCase();
-    });
-    return !headers.some(function (header) {
-      return header === "password" || header === "password_plaintext" ||
-        header === "access_token" || header === "refresh_token";
-    });
+  check("Users contains no credential or lockout fields", function () {
+    const headers = getMasterSchema_().Users;
+    const forbidden = [
+      "password_hash", "password_salt", "password_hash_algorithm",
+      "password_hash_iterations", "password_changed_at",
+      "failed_login_count", "login_locked_until", "access_token", "refresh_token"
+    ];
+    return forbidden.every(function (name) { return headers.indexOf(name) < 0; }) &&
+      ["user_id", "email", "role", "account_status", "registration_status"].every(function (name) {
+        return headers.indexOf(name) >= 0;
+      });
   });
 
-  check("account schema supports login throttling and OTP challenges", function () {
+  check("AuthRecords contains custom-password and lockout fields", function () {
+    const headers = getMasterSchema_().AuthRecords;
+    return [
+      "auth_record_id", "user_id", "auth_method", "password_hash",
+      "password_salt", "password_hash_algorithm", "password_hash_iterations",
+      "password_changed_at", "failed_login_count", "login_locked_until"
+    ].every(function (name) { return headers.indexOf(name) >= 0; });
+  });
+
+  check("session and challenge records contain only verifiers, never raw credentials", function () {
     const schema = getMasterSchema_();
-    return schema.Users.indexOf("login_failed_count") >= 0 &&
-      schema.Users.indexOf("login_locked_until") >= 0 &&
-      Array.isArray(schema.AuthChallenges) &&
-      ["challenge_id", "user_id", "verifier_hash", "expires_at", "attempt_count", "consumed_at"].every(function (name) {
-        return schema.AuthChallenges.indexOf(name) >= 0;
-      });
+    return schema.Sessions.indexOf("credential_verifier") >= 0 &&
+      schema.Sessions.indexOf("token") < 0 &&
+      schema.AuthChallenges.indexOf("verifier_hash") >= 0 &&
+      schema.AuthChallenges.indexOf("otp") < 0;
   });
 
   check("PBKDF2-HMAC-SHA-256 matches the standard one-iteration vector", function () {
@@ -79,9 +100,17 @@ function runBackendSelfTests() {
   });
 
   check("only active, verified, approved accounts authenticate", function () {
-    const base = { status: ACCOUNT_STATUS.ACTIVE, email_verified_at: "2026-01-01T00:00:00.000Z", approved_at: "2026-01-01T00:00:00.000Z", disabled_at: "", suspended_at: "", deleted_at: "" };
+    const base = {
+      account_status: ACCOUNT_STATUS.ACTIVE,
+      email_verified: true,
+      email_verified_at: "2026-01-01T00:00:00.000Z",
+      approved_at: "2026-01-01T00:00:00.000Z",
+      disabled_at: "",
+      suspended_at: "",
+      deleted_at: ""
+    };
     return canAccountAuthenticate_(base) &&
-      !canAccountAuthenticate_(Object.assign({}, base, { status: ACCOUNT_STATUS.SUSPENDED })) &&
+      !canAccountAuthenticate_(Object.assign({}, base, { account_status: ACCOUNT_STATUS.SUSPENDED })) &&
       !canAccountAuthenticate_(Object.assign({}, base, { approved_at: "" }));
   });
 
