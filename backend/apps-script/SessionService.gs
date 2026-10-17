@@ -138,7 +138,6 @@ function revokeSession_(token, reason) {
     const lastRow = sessions.getLastRow();
     if (lastRow < 2) return false;
 
-    const headers = getHeaderMap_(sessions);
     const rows = sessions.getRange(
       2, 1, lastRow - 1, sessions.getLastColumn()
     ).getValues();
@@ -159,8 +158,10 @@ function revokeSession_(token, reason) {
 
       const now = new Date().toISOString();
       const safeReason = String(reason || "logout").slice(0, 80);
-      setCellIfColumnExists_(sessions, index + 2, headers, "revoked_at", now);
-      setCellIfColumnExists_(sessions, index + 2, headers, "revoke_reason", safeReason);
+      updateSheetRowFields_(sessions, index + 2, {
+        revoked_at: now,
+        revoke_reason: safeReason
+      });
       appendAuditEvent_({
         user_id: String(record.user_id || ""),
         action: "session_revoked",
@@ -199,7 +200,6 @@ function revokeUserSessionsUnlocked_(userId, reason, occurredAt) {
   const lastRow = sessions.getLastRow();
   if (lastRow < 2) return 0;
 
-  const headers = getHeaderMap_(sessions);
   const rows = sessions.getRange(
     2, 1, lastRow - 1, sessions.getLastColumn()
   ).getValues();
@@ -213,8 +213,10 @@ function revokeUserSessionsUnlocked_(userId, reason, occurredAt) {
       return;
     }
 
-    setCellIfColumnExists_(sessions, index + 2, headers, "revoked_at", now);
-    setCellIfColumnExists_(sessions, index + 2, headers, "revoke_reason", safeReason);
+    updateSheetRowFields_(sessions, index + 2, {
+      revoked_at: now,
+      revoke_reason: safeReason
+    });
     count++;
   });
 
