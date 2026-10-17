@@ -1,25 +1,51 @@
 /**
- * Versioned data contracts. These definitions do not create spreadsheets
- * or tabs by themselves.
+ * Versioned canonical data contracts.
  *
- * Never store plaintext passwords, raw session tokens, OAuth tokens, CAPTCHA
- * secrets, OTP values, or provider refresh tokens. Password hash fields contain
- * only the output of the configured password-hashing adapter.
+ * Master workbook: account registry, resource map, social connections,
+ * non-secret configuration, authentication records, audit trail and the
+ * supporting session/challenge records required by custom authentication.
+ * Per-user workbook: the seven approved operational tabs.
+ *
+ * These definitions do not create or modify spreadsheets by themselves.
+ * Initializers remain manual-only and guarded by private opt-in properties.
+ * Never store plaintext passwords, raw session tokens, OTP values, OAuth
+ * tokens, CAPTCHA secrets or provider refresh tokens in spreadsheet cells.
  */
-const MASTER_SCHEMA_VERSION = 1;
+const MASTER_SCHEMA_VERSION = 2;
 
 function getMasterSchema_() {
   return {
     Users: [
-      "user_id", "auth_provider", "auth_subject", "full_name", "username",
-      "email_normalized", "phone", "password_hash", "password_salt",
-      "password_hash_algorithm", "password_hash_iterations", "password_changed_at",
-      "role", "status", "status_reason", "email_verified_at", "approved_at",
-      "suspended_at", "disabled_at", "deleted_at", "login_failed_count", "login_locked_until", "created_at", "updated_at", "last_login_at"
+      "user_id", "full_name", "username", "email", "phone", "role",
+      "account_status", "registration_status", "email_verified",
+      "email_verified_at", "approved_at", "status_reason", "suspended_at",
+      "disabled_at", "deleted_at", "created_at", "updated_at", "last_login_at"
     ],
-    ResourceMap: [
-      "mapping_id", "user_id", "resource_type", "resource_id",
-      "owner_account_label", "status", "created_at", "updated_at"
+    UserResources: [
+      "user_id", "user_spreadsheet_id", "drive_root_folder_id", "media_folder_id",
+      "published_media_folder_id", "provisioning_status", "spreadsheet_status",
+      "drive_status", "schema_version", "created_at", "updated_at", "retry_count",
+      "last_error_code"
+    ],
+    SocialConnections: [
+      "social_connection_id", "user_id", "brand_id", "platform",
+      "platform_account_id", "account_display_name", "connection_status",
+      "granted_scopes", "connected_at", "updated_at", "token_reference",
+      "token_expires_at", "last_validated_at", "last_error_code", "disconnected_at"
+    ],
+    AppConfig: [
+      "config_key", "config_value", "value_type", "environment", "is_enabled",
+      "updated_at", "updated_by"
+    ],
+    AuthRecords: [
+      "auth_record_id", "user_id", "auth_method", "password_hash", "password_salt",
+      "password_hash_algorithm", "password_hash_iterations", "password_changed_at",
+      "failed_login_count", "login_locked_until", "created_at", "updated_at"
+    ],
+    AuditLogs: [
+      "audit_event_id", "occurred_at", "actor_type", "actor_id", "action",
+      "target_type", "target_id", "outcome", "reason_code", "request_id",
+      "metadata_json"
     ],
     Sessions: [
       "session_id", "user_id", "credential_verifier", "issued_at",
@@ -29,10 +55,6 @@ function getMasterSchema_() {
       "challenge_id", "user_id", "challenge_type", "verifier_hash",
       "expires_at", "attempt_count", "max_attempts", "last_sent_at",
       "consumed_at", "created_at"
-    ],
-    AuditLog: [
-      "event_id", "user_id", "action", "outcome", "occurred_at",
-      "request_id", "details_json"
     ]
   };
 }
@@ -40,36 +62,33 @@ function getMasterSchema_() {
 function getOperationalSchema_() {
   return {
     Brands: [
-      "brand_id", "user_id", "name", "description", "website_url",
+      "brand_id", "brand_name", "description", "website_url", "timezone",
       "status", "created_at", "updated_at"
     ],
-    SocialAccounts: [
-      "social_account_id", "user_id", "brand_id", "platform",
-      "provider_account_id", "display_name", "connection_status",
-      "token_reference", "connected_at", "updated_at"
+    Posts: [
+      "post_id", "brand_id", "caption", "first_comment", "content_type",
+      "status", "scheduled_at_utc", "timezone", "created_at", "updated_at",
+      "deleted_at"
     ],
-    Content: [
-      "content_id", "user_id", "brand_id", "title", "caption",
-      "media_ids_json", "platforms_json", "status", "created_at",
-      "updated_at", "created_by"
-    ],
-    PublishingQueue: [
-      "queue_id", "user_id", "content_id", "social_account_id",
-      "scheduled_at", "status", "attempt_count", "last_attempt_at",
-      "next_attempt_at", "last_error_code", "created_at", "updated_at"
-    ],
-    PublishingLogs: [
-      "log_id", "user_id", "content_id", "social_account_id", "event_type",
-      "status", "provider_post_id", "occurred_at", "error_code",
-      "safe_details_json"
+    PostTargets: [
+      "target_id", "post_id", "social_connection_id", "platform_status",
+      "scheduled_at_utc", "published_at_utc", "platform_post_id",
+      "attempt_count", "next_retry_at", "last_error_code", "updated_at"
     ],
     MediaLibrary: [
-      "media_id", "user_id", "brand_id", "drive_file_id", "file_name",
-      "mime_type", "size_bytes", "storage_status", "created_at", "updated_at"
+      "media_id", "drive_file_id", "file_name", "mime_type", "media_type",
+      "size_bytes", "alt_text", "status", "uploaded_at", "updated_at",
+      "retention_status", "cleanup_eligible_at", "last_referenced_at"
     ],
-    Notifications: [
-      "notification_id", "user_id", "type", "title", "message",
-      "read_at", "created_at", "related_entity_type", "related_entity_id"
+    PostMedia: [
+      "post_media_id", "post_id", "media_id", "sort_order", "created_at"
+    ],
+    PublishingLogs: [
+      "log_id", "post_id", "target_id", "attempted_at", "result_status",
+      "platform_post_id", "error_code", "retry_count"
+    ],
+    Settings: [
+      "setting_key", "setting_value", "value_type", "updated_at", "updated_by"
     ]
   };
 }
@@ -83,10 +102,10 @@ function getSchemaPreview() {
 }
 
 /**
- * Manual-only setup helper.
- * It refuses to run unless the owner deliberately sets
- * ENABLE_SCHEMA_INITIALIZATION=YES in Script Properties.
- * Run only against a disposable TEST master spreadsheet first.
+ * Manual-only master setup helper.
+ * Requires ENABLE_SCHEMA_INITIALIZATION=YES and a spreadsheet name containing
+ * TEST. Run only against a disposable test workbook. This function is not
+ * called automatically by the API.
  */
 function initializeMasterSchema() {
   if (getPrivateProperty_(AppConfig.PROPERTY.ENABLE_SCHEMA_INITIALIZATION) !== "YES") {
@@ -98,15 +117,14 @@ function initializeMasterSchema() {
   if (!/test/i.test(spreadsheet.getName())) {
     throw new Error("MASTER_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
   }
+
   const schema = getMasterSchema_();
   validateSchemaCompatibility_(spreadsheet, schema);
 
   Object.keys(schema).forEach(function (sheetName) {
     const headers = schema[sheetName];
     let sheet = spreadsheet.getSheetByName(sheetName);
-    if (!sheet) {
-      sheet = spreadsheet.insertSheet(sheetName);
-    }
+    if (!sheet) sheet = spreadsheet.insertSheet(sheetName);
 
     if (sheet.getLastRow() === 0) {
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -114,26 +132,26 @@ function initializeMasterSchema() {
       return;
     }
 
-    const existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), headers.length))
-      .getDisplayValues()[0]
-      .slice(0, headers.length);
+    const existing = sheet.getRange(
+      1, 1, 1, Math.max(sheet.getLastColumn(), headers.length)
+    ).getDisplayValues()[0].slice(0, headers.length);
 
     const matches = headers.every(function (header, index) {
       return existing[index] === header;
     });
-
-    if (!matches) {
-      throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
-    }
+    if (!matches) throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
   });
 
-  return { ok: true, version: MASTER_SCHEMA_VERSION, sheets: Object.keys(schema) };
+  return {
+    ok: true,
+    version: MASTER_SCHEMA_VERSION,
+    sheets: Object.keys(schema)
+  };
 }
 
-
 /**
- * Preflight all existing tabs before any initializer writes. This avoids a
- * partially initialized workbook when a later tab has incompatible headers.
+ * Preflight all existing tabs before any initializer writes. This prevents
+ * known header mismatches from causing a partial schema initialization.
  */
 function validateSchemaCompatibility_(spreadsheet, schema) {
   Object.keys(schema).forEach(function (sheetName) {
@@ -145,11 +163,10 @@ function validateSchemaCompatibility_(spreadsheet, schema) {
     const existing = sheet.getRange(1, 1, 1, width)
       .getDisplayValues()[0]
       .slice(0, expectedHeaders.length);
+
     const matches = expectedHeaders.every(function (header, index) {
       return existing[index] === header;
     });
-    if (!matches) {
-      throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
-    }
+    if (!matches) throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
   });
 }
