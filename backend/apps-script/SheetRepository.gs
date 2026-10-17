@@ -84,3 +84,32 @@ function appendAuditEvent_(event) {
   };
   return appendRecord_(sheet, safeEvent);
 }
+
+
+/**
+ * Converts a repository row match into an object keyed by the sheet headers.
+ * A match is the { values, rowNumber } object returned by findRecordByValue_.
+ */
+function rowToRecord_(sheet, match) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  const record = {};
+  headers.forEach(function (header, index) {
+    const key = String(header || "").trim();
+    if (key) record[key] = match.values[index];
+  });
+  return record;
+}
+
+/**
+ * Updates only explicitly named columns and fails if the sheet schema is wrong.
+ * Keep this generic data-access helper out of individual business services.
+ */
+function updateSheetRowFields_(sheet, rowNumber, fields) {
+  const headerMap = getHeaderMap_(sheet);
+  Object.keys(fields).forEach(function (key) {
+    if (!Object.prototype.hasOwnProperty.call(headerMap, key)) {
+      throw new Error("SHEET_FIELD_NOT_FOUND:" + key);
+    }
+    sheet.getRange(rowNumber, headerMap[key] + 1).setValue(fields[key]);
+  });
+}
