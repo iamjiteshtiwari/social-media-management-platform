@@ -203,6 +203,120 @@ function listUserPosts_(userId, options) {
   return { ok: true, posts: filtered };
 }
 
+function addUserPostMedia_(userId, postId, mediaIds) {
+  const postKey = String(postId || "").trim();
+  const ids = Array.isArray(mediaIds) ? mediaIds.map(function (value) { return String(value || "").trim(); }).filter(Boolean) : [];
+  if (!postKey || !ids.length || ids.length > 10 || ids.some(function (id) { return id.length > 100; })) {
+    throw new Error("INVALID_POST_MEDIA");
+  }
+  if (new Set(ids).size !== ids.length) throw new Error("DUPLICATE_MEDIA_ID");
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
+  try {
+    const context = getOperationalContextForUser_(userId);
+    const posts = getRequiredSheet_(context.workbook, "Posts");
+    const postMatch = findRecordByValue_(posts, "post_id", postKey);
+    if (!postMatch) throw new Error("POST_NOT_FOUND");
+    const post = rowToRecord_(posts, postMatch);
+    if (post.deleted_at || ["published", "publishing", "deleted"].indexOf(String(post.status || "").toLowerCase()) >= 0) {
+      throw new Error("POST_NOT_EDITABLE");
+    }
+    const library = getRequiredSheet_(context.workbook, "MediaLibrary");
+    const links = getRequiredSheet_(context.workbook, "PostMedia");
+    const currentLinks = readSheetRecords_(links).filter(function (row) {
+      return String(row.post_id || "") === postKey;
+    });
+    const alreadyLinked = {};
+    currentLinks.forEach(function (row) { alreadyLinked[String(row.media_id || "")] = true; });
+    const existingOrders = currentLinks.map(function (row) { return Number(row.sort_order) || 0; });
+    let order = existingOrders.length ? Math.max.apply(null, existingOrders) + 1 : 1;
+    const now = new Date().toISOString();
+    ids.forEach(function (mediaId) {
+      if (alreadyLinked[mediaId]) throw new Error("MEDIA_ALREADY_ATTACHED");
+      const mediaMatch = findRecordByValue_(library, "media_id", mediaId);
+      if (!mediaMatch) throw new Error("MEDIA_NOT_FOUND");
+      const media = rowToRecord_(library, mediaMatch);
+      if (String(media.status || "").toLowerCase() !== "available" ||
+          String(media.retention_status || "").toLowerCase() === "protected") {
+        throw new Error("MEDIA_NOT_AVAILABLE");
+      }
+      appendRecord_(links, {
+        post_media_id: Utilities.getUuid(),
+        post_id: postKey,
+        media_id: mediaId,
+        sort_order: order++,
+        created_at: now
+      });
+      updateSheetRowFields_(library, mediaMatch.rowNumber, {
+        last_referenced_at: now,
+        cleanup_eligible_at: ""
+      });
+      alreadyLinked[mediaId] = true;
+    });
+    updateSheetRowFields_(posts, postMatch.rowNumber, { updated_at: now });
+    return { ok: true, code: "POST_MEDIA_ATTACHED", post_id: postKey, attached_count: ids.length };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function createUserPostTarget_(userId, postId, socialConnectionId) {
+  const postKey = String(postId || "").trim();
+  const connectionKey = String(socialConnectionId || "").trim();
+  if (!postKey || !connectionKey) throw new Error("INVALID_POST_TARGET");
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
+  try {
+    const context = getOperationalContextForUser_(userId);
+    const posts = getRequiredSheet_(context.workbook, "Posts");
+    const postMatch = findRecordByValue_(posts, "post_id", postKey);
+    if (!postMatch) throw new Error("POST_NOT_FOUND");
+    const post = rowToRecord_(posts, postMatch);
+    if (post.deleted_at || ["published", "publishing", "deleted", "cancelled"].indexOf(String(post.status || "").toLowerCase()) >= 0) {
+      throw new Error("POST_NOT_TARGETABLE");
+    }
+
+    const master = getMasterSpreadsheet_();
+    const connections = getRequiredSheet_(master, "SocialConnections");
+    const connectionMatch = findRecordByValue_(connections, "social_connection_id", connectionKey);
+    if (!connectionMatch) throw new Error("SOCIAL_CONNECTION_NOT_AVAILABLE");
+    const connection = rowToRecord_(connections, connectionMatch);
+    if (String(connection.user_id || "") !== String(userId) ||
+        String(connection.brand_id || "") !== String(post.brand_id) ||
+        String(connection.connection_status || "").toLowerCase() !== "connected" ||
+        !String(connection.token_reference || "").trim()) {
+      throw new Error("SOCIAL_CONNECTION_NOT_AVAILABLE");
+    }
+
+    const targets = getRequiredSheet_(context.workbook, "PostTargets");
+    const existing = readSheetRecords_(targets).some(function (target) {
+      return String(target.post_id || "") === postKey &&
+        String(target.social_connection_id || "") === connectionKey &&
+        ["cancelled", "failed"].indexOf(String(target.platform_status || "").toLowerCase()) < 0;
+    });
+    if (existing) throw new Error("POST_TARGET_ALREADY_EXISTS");
+    const now = new Date().toISOString();
+    const targetId = Utilities.getUuid();
+    const initialStatus = String(post.status || "").toLowerCase() === "scheduled" ? "scheduled" : "pending";
+    appendRecord_(targets, {
+      target_id: targetId,
+      post_id: postKey,
+      social_connection_id: connectionKey,
+      platform_status: initialStatus,
+      scheduled_at_utc: String(post.scheduled_at_utc || ""),
+      published_at_utc: "",
+      platform_post_id: "",
+      attempt_count: 0,
+      next_retry_at: "",
+      last_error_code: "",
+      updated_at: now
+    });
+    return { ok: true, code: "POST_TARGET_CREATED", target_id: targetId, platform_status: initialStatus };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function updateUserPost_(userId, postId, input) {
   const id = String(postId || "").trim();
   const value = input || {};
