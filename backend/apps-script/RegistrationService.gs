@@ -14,7 +14,7 @@ function registerAccount_(input) {
 
   try {
     const users = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
-    if (findRecordByValue_(users, "email_normalized", data.email)) {
+    if (findRecordByValue_(users, "email", data.email)) {
       return { ok: true, code: "REGISTRATION_ACCEPTED", nextStep: "check_email" };
     }
     if (findRecordByValue_(users, "username", data.username)) {
@@ -27,31 +27,39 @@ function registerAccount_(input) {
 
     appendRecord_(users, {
       user_id: userId,
-      auth_provider: "password",
-      auth_subject: "",
       full_name: data.fullName,
       username: data.username,
-      email_normalized: data.email,
+      email: data.email,
       phone: data.phone,
-      password_hash: password.hash,
-      password_salt: password.salt,
-      password_hash_algorithm: password.algorithm,
-      password_hash_iterations: password.iterations,
-      password_changed_at: now,
       role: "member",
-      status: ACCOUNT_STATUS.PENDING_EMAIL,
-      status_reason: "",
+      account_status: ACCOUNT_STATUS.PENDING_EMAIL,
+      registration_status: "pending",
+      email_verified: false,
       email_verified_at: "",
       approved_at: "",
+      status_reason: "",
       suspended_at: "",
       disabled_at: "",
       deleted_at: "",
       created_at: now,
       updated_at: now,
-      last_login_at: "",
-      login_failed_count: 0,
-      login_locked_until: ""
+      last_login_at: ""
     });
+
+    appendRecord_(getRequiredSheet_(getMasterSpreadsheet_(), "AuthRecords"), {
+      auth_record_id: Utilities.getUuid(),
+      user_id: userId,
+      auth_method: "password",
+      password_hash: password.hash,
+      password_salt: password.salt,
+      password_hash_algorithm: password.algorithm,
+      password_hash_iterations: password.iterations,
+      password_changed_at: now,
+      failed_login_count: 0,
+      login_locked_until: "",
+      created_at: now,
+      updated_at: now
+    });;
 
     try {
       issueEmailVerificationOtp_(userId, data.email, data.fullName);
@@ -62,7 +70,7 @@ function registerAccount_(input) {
         consumeChallenge_(challengeSheet, failedChallenge.rowNumber, new Date().toISOString());
       }
       updateUserFieldsById_(userId, {
-        status: ACCOUNT_STATUS.PENDING_EMAIL,
+        account_status: ACCOUNT_STATUS.PENDING_EMAIL,
         status_reason: "Verification email delivery failed; resend is available",
         updated_at: new Date().toISOString()
       });
@@ -103,11 +111,11 @@ function verifyRegistrationEmailOtp_(input) {
   try {
     const master = getMasterSpreadsheet_();
     const usersSheet = getRequiredSheet_(master, "Users");
-    const match = findRecordByValue_(usersSheet, "email_normalized", email);
+    const match = findRecordByValue_(usersSheet, "email", email);
     if (!match) return { ok: false, code: "INVALID_VERIFICATION" };
 
     const user = rowToRecord_(usersSheet, match);
-    if (user.status !== ACCOUNT_STATUS.PENDING_EMAIL) {
+    if (user.account_status !== ACCOUNT_STATUS.PENDING_EMAIL) {
       return { ok: false, code: "INVALID_VERIFICATION" };
     }
 
@@ -144,8 +152,9 @@ function verifyRegistrationEmailOtp_(input) {
     const now = new Date(nowMs).toISOString();
     consumeChallenge_(challenges, latest.rowNumber, now);
     updateUserFieldsById_(user.user_id, {
+      email_verified: true,
       email_verified_at: now,
-      status: ACCOUNT_STATUS.PENDING_APPROVAL,
+      account_status: ACCOUNT_STATUS.PENDING_APPROVAL,
       updated_at: now
     });
     appendAuditEvent_({
@@ -174,7 +183,7 @@ function resendRegistrationEmailOtp_(input) {
   try {
     const master = getMasterSpreadsheet_();
     const usersSheet = getRequiredSheet_(master, "Users");
-    const match = findRecordByValue_(usersSheet, "email_normalized", email);
+    const match = findRecordByValue_(usersSheet, "email", email);
     if (!match) return { ok: true, code: "VERIFICATION_SENT" };
 
     const user = rowToRecord_(usersSheet, match);
