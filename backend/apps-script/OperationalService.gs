@@ -253,8 +253,10 @@ function updateUserPost_(userId, postId, input) {
     if (fields.status === "scheduled" && !fields.scheduled_at_utc && !post.scheduled_at_utc) {
       throw new Error("INVALID_SCHEDULE_TIME");
     }
-    fields.updated_at = new Date().toISOString();
+    const updatedAt = new Date().toISOString();
+    fields.updated_at = updatedAt;
     updateSheetRowFields_(posts, match.rowNumber, fields);
+    if (fields.status === "cancelled") cancelPostTargets_(context.workbook, id, updatedAt);
     return { ok: true, code: "POST_UPDATED", post_id: id };
   } finally {
     lock.releaseLock();
