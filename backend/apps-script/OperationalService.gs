@@ -28,11 +28,25 @@ function getOperationalContextForUser_(userId) {
   if (String(resource.user_spreadsheet_id) === String(getPrivateProperty_(AppConfig.PROPERTY.MASTER_SPREADSHEET_ID))) {
     throw new Error("OPERATIONAL_WORKBOOK_MUST_DIFFER_FROM_MASTER");
   }
-  return {
-    user: user,
-    resource: resource,
-    workbook: SpreadsheetApp.openById(String(resource.user_spreadsheet_id))
-  };
+  const workbook = SpreadsheetApp.openById(String(resource.user_spreadsheet_id));
+  assertOperationalWorkbookSchema_(workbook);
+  return { user: user, resource: resource, workbook: workbook };
+}
+
+/** Fail closed if an operational workbook is missing tabs or has drifted headers. */
+function assertOperationalWorkbookSchema_(workbook) {
+  const schema = getOperationalSchema_();
+  Object.keys(schema).forEach(function (sheetName) {
+    const sheet = workbook.getSheetByName(sheetName);
+    if (!sheet || sheet.getLastRow() < 1 || sheet.getLastColumn() !== schema[sheetName].length) {
+      throw new Error("OPERATIONAL_SCHEMA_MISMATCH");
+    }
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0]
+      .map(function (value) { return String(value || "").trim(); });
+    if (headers.some(function (header, index) { return header !== schema[sheetName][index]; })) {
+      throw new Error("OPERATIONAL_SCHEMA_MISMATCH");
+    }
+  });
 }
 
 function listUserBrands_(userId) {
