@@ -34,7 +34,6 @@ function previewDuePublishingTargets_(workbook, nowIso, limit) {
   };
 
   targets.forEach(function (target) {
-    if (due.length >= maxItems) return;
     const targetId = String(target.target_id || "").trim();
     const postId = String(target.post_id || "").trim();
     const status = String(target.platform_status || "").trim().toLowerCase();
@@ -84,6 +83,9 @@ function previewDuePublishingTargets_(workbook, nowIso, limit) {
     return a.due_at_utc.localeCompare(b.due_at_utc) ||
       a.target_id.localeCompare(b.target_id);
   });
+  // Sort every eligible candidate first, then enforce the limit so the queue
+  // always returns the earliest-due work rather than the first sheet rows.
+  if (due.length > maxItems) due.splice(maxItems);
 
   return {
     ok: true,
@@ -128,21 +130,29 @@ function testDuePublishingQueueSelection() {
     retryPost: "TEST_QUEUE_POST_RETRY_" + suffix,
     blankRetryPost: "TEST_QUEUE_POST_BLANK_" + suffix,
     cancelledPost: "TEST_QUEUE_POST_CANCELLED_" + suffix,
+    orderOldPost: "TEST_QUEUE_POST_ORDER_OLD_" + suffix,
+    orderMiddlePost: "TEST_QUEUE_POST_ORDER_MIDDLE_" + suffix,
+    orderNewestPost: "TEST_QUEUE_POST_ORDER_NEWEST_" + suffix,
     dueTarget: "TEST_QUEUE_TARGET_DUE_" + suffix,
     futureTarget: "TEST_QUEUE_TARGET_FUTURE_" + suffix,
     retryTarget: "TEST_QUEUE_TARGET_RETRY_" + suffix,
     blankRetryTarget: "TEST_QUEUE_TARGET_BLANK_" + suffix,
-    cancelledTarget: "TEST_QUEUE_TARGET_CANCELLED_" + suffix
+    cancelledTarget: "TEST_QUEUE_TARGET_CANCELLED_" + suffix,
+    orderOldTarget: "TEST_QUEUE_TARGET_ORDER_OLD_" + suffix,
+    orderMiddleTarget: "TEST_QUEUE_TARGET_ORDER_MIDDLE_" + suffix,
+    orderNewestTarget: "TEST_QUEUE_TARGET_ORDER_NEWEST_" + suffix
   };
-  const postIds = [ids.duePost, ids.futurePost, ids.retryPost, ids.blankRetryPost, ids.cancelledPost];
-  const targetIds = [ids.dueTarget, ids.futureTarget, ids.retryTarget, ids.blankRetryTarget, ids.cancelledTarget];
+  const postIds = [ids.duePost, ids.futurePost, ids.retryPost, ids.blankRetryPost, ids.cancelledPost, ids.orderOldPost, ids.orderMiddlePost, ids.orderNewestPost];
+  const targetIds = [ids.dueTarget, ids.futureTarget, ids.retryTarget, ids.blankRetryTarget, ids.cancelledTarget, ids.orderOldTarget, ids.orderMiddleTarget, ids.orderNewestTarget];
   const cleanupErrors = [];
   const checks = {
     dueScheduledIncluded: false,
     futureScheduledExcluded: false,
     dueRetryIncluded: false,
     pendingWithoutRetryExcluded: false,
-    cancelledTargetExcluded: false
+    cancelledTargetExcluded: false,
+    earliestDueTargetsPrioritized: false,
+    laterDueTargetExcludedAtLimit: false
   };
 
   function addPost(postId, status, scheduledAt) {
@@ -173,12 +183,22 @@ function testDuePublishingQueueSelection() {
     addPost(ids.retryPost, "draft", "");
     addPost(ids.blankRetryPost, "draft", "");
     addPost(ids.cancelledPost, "scheduled", dueAt);
+    const orderOldAt = new Date(now - 5 * 60 * 1000).toISOString();
+    const orderMiddleAt = new Date(now - 3 * 60 * 1000).toISOString();
+    const orderNewestAt = new Date(now - 1 * 60 * 1000).toISOString();
+    addPost(ids.orderOldPost, "scheduled", orderOldAt);
+    addPost(ids.orderMiddlePost, "scheduled", orderMiddleAt);
+    addPost(ids.orderNewestPost, "scheduled", orderNewestAt);
 
     addTarget(ids.dueTarget, ids.duePost, "scheduled", dueAt, "");
     addTarget(ids.futureTarget, ids.futurePost, "scheduled", futureAt, "");
     addTarget(ids.retryTarget, ids.retryPost, "pending", "", retryAt);
     addTarget(ids.blankRetryTarget, ids.blankRetryPost, "pending", "", "");
     addTarget(ids.cancelledTarget, ids.cancelledPost, "cancelled", dueAt, "");
+    // Append in reverse due-time order to prove the selector sorts before limiting.
+    addTarget(ids.orderNewestTarget, ids.orderNewestPost, "scheduled", orderNewestAt, "");
+    addTarget(ids.orderMiddleTarget, ids.orderMiddlePost, "scheduled", orderMiddleAt, "");
+    addTarget(ids.orderOldTarget, ids.orderOldPost, "scheduled", orderOldAt, "");
 
     // The cancelled parent post is also excluded if a target is mistakenly left queued.
     const cancelledPostMatch = findRecordByValue_(postsSheet, "post_id", ids.cancelledPost);
@@ -193,6 +213,12 @@ function testDuePublishingQueueSelection() {
       result.targets.some(function (target) { return target.target_id === ids.retryTarget && target.queue_reason === "retry_time_due"; });
     checks.pendingWithoutRetryExcluded = selectedIds.indexOf(ids.blankRetryTarget) < 0;
     checks.cancelledTargetExcluded = selectedIds.indexOf(ids.cancelledTarget) < 0;
+
+    const limited = previewDuePublishingTargets_(workbook, nowIso, 2);
+    const limitedIds = limited.targets.map(function (target) { return target.target_id; });
+    checks.earliestDueTargetsPrioritized = limited.selected === 2 &&
+      limitedIds[0] === ids.orderOldTarget && limitedIds[1] === ids.orderMiddleTarget;
+    checks.laterDueTargetExcludedAtLimit = limitedIds.indexOf(ids.orderNewestTarget) < 0;
   } catch (error) {
     cleanupErrors.push("TEST_FAILED:" + String(error && error.message || "UNKNOWN").slice(0, 100));
   } finally {
