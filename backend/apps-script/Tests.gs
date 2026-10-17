@@ -162,6 +162,15 @@ function runBackendSelfTests() {
       isIncompletePendingRegistration_(null, false) === false;
   });
 
+  check("media retention schema supports protected cleanup", function () {
+    const schema = getOperationalSchema_();
+    return MEDIA_RETENTION_DAYS === 30 &&
+      ["media_id", "drive_file_id", "uploaded_at", "status", "retention_status", "cleanup_eligible_at", "last_referenced_at"]
+        .every(function (header) { return schema.MediaLibrary.indexOf(header) >= 0; }) &&
+      schema.PostMedia.indexOf("media_id") >= 0 &&
+      schema.PostMedia.indexOf("post_id") >= 0;
+  });
+
   const passed = results.filter(function (result) { return result.passed; }).length;
   return {
     ok: passed === results.length,
