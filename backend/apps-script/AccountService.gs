@@ -317,30 +317,11 @@ function findLatestChallenge_(sheet, userId, challengeType) {
   return found;
 }
 
-function rowToRecord_(sheet, match) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
-  const record = {};
-  headers.forEach(function (header, index) {
-    record[String(header).trim()] = match.values[index];
-  });
-  return record;
-}
-
 function updateUserFieldsById_(userId, fields) {
   const sheet = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
   const match = findRecordByValue_(sheet, "user_id", userId);
   if (!match) throw new Error("USER_NOT_FOUND");
   updateSheetRowFields_(sheet, match.rowNumber, fields);
-}
-
-function updateSheetRowFields_(sheet, rowNumber, fields) {
-  const headerMap = getHeaderMap_(sheet);
-  Object.keys(fields).forEach(function (key) {
-    if (!Object.prototype.hasOwnProperty.call(headerMap, key)) {
-      throw new Error("SHEET_FIELD_NOT_FOUND:" + key);
-    }
-    sheet.getRange(rowNumber, headerMap[key] + 1).setValue(fields[key]);
-  });
 }
 
 function consumeChallenge_(sheet, rowNumber, consumedAt) {
