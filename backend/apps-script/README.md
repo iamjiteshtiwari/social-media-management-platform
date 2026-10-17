@@ -37,7 +37,7 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `Tests.gs`: safe self-tests for schema contracts, password hashing, session policy and scaffold readiness.
 - `OperationalSetup.gs`: read-only cross-account access check and explicitly gated initialization for a disposable work-owned operational test sheet.
 - `MaintenanceService.gs`: manual-only, opt-in 30-day media cleanup preview/execution; protects media referenced by posts and never deletes external social content.
-- `OperationalService.gs`: internal business rules for user-owned brands and posts, schedule validation, soft deletion, and cancellation of queued post targets.
+- `OperationalService.gs`: validates the user's operational workbook headers before business operations; handles brands, posts, schedule validation, ordered media links, target records, soft deletion, and cancellation of queued targets.
 - `MediaService.gs`: size-limited uploads to each user's mapped Drive media folder, MediaLibrary registration, and guarded deletion of unreferenced media.
 - `OperationalService.gs` also supports ordered media attachments and per-post target records; actual OAuth provider verification and publishing adapters are not implemented by these data-layer helpers.
 
