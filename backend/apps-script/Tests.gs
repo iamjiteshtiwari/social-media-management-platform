@@ -153,3 +153,45 @@ function runBackendSelfTests() {
     results: results
   };
 }
+
+
+/**
+ * Safe deployment-readiness check for CAPTCHA configuration.
+ * Reports only booleans and a hostname; never returns private site secrets.
+ * This does not contact Google or enable public routes.
+ */
+function testCaptchaConfigurationReadiness() {
+  const properties = PropertiesService.getScriptProperties();
+  const registrationSecret = String(
+    properties.getProperty(AppConfig.PROPERTY.REGISTRATION_CAPTCHA_SECRET) || ""
+  ).trim();
+  const loginSecret = String(
+    properties.getProperty(AppConfig.PROPERTY.LOGIN_CAPTCHA_SECRET) || ""
+  ).trim();
+  const hostname = getAllowedHostname_();
+  let scoreValid = false;
+
+  try {
+    const score = parseCaptchaMinScore_();
+    scoreValid = Number.isFinite(score) && score >= 0 && score <= 1;
+  } catch (error) {
+    scoreValid = false;
+  }
+
+  const result = {
+    registrationSecretConfigured: registrationSecret.length > 0,
+    loginSecretConfigured: loginSecret.length > 0,
+    expectedHostnameConfigured: hostname === AppConfig.APP_HOSTNAME_DEFAULT,
+    expectedHostname: hostname,
+    scoreConfigurationValid: scoreValid,
+    publicRegistrationEnabled: getPrivateProperty_(AppConfig.PROPERTY.ENABLE_PUBLIC_REGISTRATION) === "YES",
+    note: "Readiness only. No CAPTCHA token was verified, no email was sent, and no public route was enabled."
+  };
+
+  result.ready = result.registrationSecretConfigured &&
+    result.loginSecretConfigured &&
+    result.expectedHostnameConfigured &&
+    result.scoreConfigurationValid;
+
+  return result;
+}
