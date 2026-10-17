@@ -182,6 +182,14 @@ function runBackendSelfTests() {
         .every(function (key) { return schema.PostTargets.indexOf(key) >= 0; });
   });
 
+  check("media service fields match the canonical storage contract", function () {
+    const schema = getOperationalSchema_();
+    return ["media_id", "drive_file_id", "file_name", "mime_type", "media_type", "size_bytes",
+      "status", "uploaded_at", "updated_at", "retention_status"].every(function (key) {
+        return schema.MediaLibrary.indexOf(key) >= 0;
+      }) && schema.PostMedia.indexOf("media_id") >= 0;
+  });
+
   const passed = results.filter(function (result) { return result.passed; }).length;
   return {
     ok: passed === results.length,
