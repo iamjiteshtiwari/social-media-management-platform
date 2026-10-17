@@ -101,6 +101,12 @@ function runBackendSelfTests() {
       health.capabilities.accountAdministration === false;
   });
 
+  check("constant-time string comparison handles matching and non-matching values", function () {
+    return constantTimeStringEquals_("same-value", "same-value") &&
+      !constantTimeStringEquals_("same-value", "different-value") &&
+      !constantTimeStringEquals_("", "non-empty");
+  });
+
   check("account security policies match the agreed workflow", function () {
     return EMAIL_OTP_TTL_MS === 5 * 60 * 1000 &&
       EMAIL_OTP_MAX_ATTEMPTS === 5 &&
