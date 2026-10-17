@@ -118,6 +118,7 @@ function initializeMasterSchema() {
     throw new Error("MASTER_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
   }
 
+  validateNoLegacySchemaTabs_(spreadsheet, ["ResourceMap", "AuditLog", "SocialAccounts", "Content", "PublishingQueue", "Notifications"]);
   const schema = getMasterSchema_();
   validateSchemaCompatibility_(spreadsheet, schema);
 
@@ -153,6 +154,23 @@ function initializeMasterSchema() {
  * Preflight all existing tabs before any initializer writes. This prevents
  * known header mismatches from causing a partial schema initialization.
  */
+/**
+ * Stops initialization when legacy tab names are present. Legacy tabs may
+ * contain data that the canonical contract does not read; never leave them
+ * silently beside the new schema or attempt an automatic destructive migration.
+ */
+function validateNoLegacySchemaTabs_(spreadsheet, legacyNames) {
+  const existingNames = spreadsheet.getSheets().map(function (sheet) {
+    return sheet.getName();
+  });
+  const found = legacyNames.filter(function (name) {
+    return existingNames.indexOf(name) >= 0;
+  });
+  if (found.length) {
+    throw new Error("LEGACY_SCHEMA_TABS_PRESENT:" + found.join(","));
+  }
+}
+
 function validateSchemaCompatibility_(spreadsheet, schema) {
   Object.keys(schema).forEach(function (sheetName) {
     const sheet = spreadsheet.getSheetByName(sheetName);
