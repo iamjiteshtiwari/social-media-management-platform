@@ -62,28 +62,36 @@ Set these only in the private Apps Script project under the personal account. Ne
 
 The public site keys belong in frontend configuration only after the exact key type and allowed hostname are confirmed. They are not secrets. The previously shared CAPTCHA secrets must be rotated before use.
 
-## Master spreadsheet schema
+## Canonical schema contract — version 2
 
-The code defines headers for these tabs:
+The source contract is aligned to the approved Notion S3.12 schema and the selected **custom-authentication** design. The schema definitions themselves do not create resources.
 
-- `Users`: identity-provider subject, profile, role, lifecycle status and timestamps. Do not store plaintext passwords or provider tokens here.
-- `ResourceMap`: user-to-resource mappings, resource type, owner account label, status and timestamps.
-- `Sessions`: only if the selected authentication/session design requires this table; store a verifier/hash, never a raw session credential.
-- `AuditLog`: sanitized security and administrative events.
+### Master workbook
 
-## Operational workbook schema
+- `Users`: identity/contact, role, account/registration status, email verification and lifecycle timestamps. No password hash/salt, password parameters, lockout state or session credentials.
+- `UserResources`: one mapping per user to the user's operational spreadsheet and private Drive folders, plus provisioning state, retries and safe error codes.
+- `SocialConnections`: central social-account metadata and opaque `token_reference` only. Never store raw access/refresh tokens in Sheets.
+- `AppConfig`: non-secret global configuration only. Private secrets remain in Apps Script Script Properties.
+- `AuthRecords`: one custom-password record per user, containing the password hash/salt/algorithm/iteration count and login-throttling state. Never store plaintext passwords.
+- `AuditLogs`: sanitized security/admin events with allow-listed metadata only.
+- `Sessions`: verifier-only session records; fixed nine-hour absolute expiry, one active session per user, and explicit revocation.
+- `AuthChallenges`: HMAC verifier for email OTP/password reset, expiry, attempt limits, resend timestamp and consumption state. Never store the OTP itself.
 
-A per-user operational workbook can use these seven tabs:
+### Per-user operational workbook
+
+The approved seven-tab template is:
 
 1. `Brands`
-2. `SocialAccounts`
-3. `Content`
-4. `PublishingQueue`
-5. `PublishingLogs`
-6. `MediaLibrary`
-7. `Notifications`
+2. `Posts`
+3. `PostTargets`
+4. `MediaLibrary`
+5. `PostMedia`
+6. `PublishingLogs`
+7. `Settings`
 
-Analytics can initially be derived from publishing logs and provider results rather than storing duplicate metrics. Add new tabs only when a feature genuinely needs them. All rows should include stable IDs and timestamps; user/brand ownership must be checked server-side.
+Use UTC for stored event/schedule timestamps and retain the intended timezone where required. A post may have multiple targets and multiple ordered media references. Local edit/delete and 30-day cleanup rules must protect active/scheduled/publishing records and must never delete content from external social platforms.
+
+Schema version 2 intentionally does not auto-migrate legacy tabs (`ResourceMap`, `AuditLog`, `SocialAccounts`, `Content`, `PublishingQueue`, `Notifications`). The guarded test initializers fail if legacy tab names are present; review/migrate manually rather than silently creating a parallel schema.
 
 ## Setup order
 
