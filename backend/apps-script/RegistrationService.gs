@@ -139,6 +139,13 @@ function verifyRegistrationEmailOtp_(input) {
       return { ok: false, code: "INVALID_VERIFICATION" };
     }
 
+    const authRecords = getRequiredSheet_(master, "AuthRecords");
+    const authMatch = findRecordByValue_(authRecords, "user_id", String(user.user_id || ""));
+    if (isIncompletePendingRegistration_(user, Boolean(authMatch))) {
+      auditIncompletePendingRegistration_(user);
+      return { ok: false, code: "INVALID_VERIFICATION" };
+    }
+
     const challenges = getRequiredSheet_(master, "AuthChallenges");
     const latest = findLatestChallenge_(challenges, user.user_id, "email_verification");
     if (!latest || latest.consumed_at) return { ok: false, code: "INVALID_VERIFICATION" };
@@ -211,6 +218,13 @@ function resendRegistrationEmailOtp_(input) {
       return { ok: true, code: "VERIFICATION_SENT" };
     }
 
+    const authRecords = getRequiredSheet_(master, "AuthRecords");
+    const authMatch = findRecordByValue_(authRecords, "user_id", String(user.user_id || ""));
+    if (isIncompletePendingRegistration_(user, Boolean(authMatch))) {
+      auditIncompletePendingRegistration_(user);
+      return { ok: true, code: "VERIFICATION_SENT" };
+    }
+
     const challenges = getRequiredSheet_(master, "AuthChallenges");
     const latest = findLatestChallenge_(challenges, user.user_id, "email_verification");
     const nowMs = Date.now();
@@ -264,4 +278,17 @@ function isIncompletePendingRegistration_(user, hasAuthRecord) {
   const status = String(user.account_status || "");
   const verified = user.email_verified === true || String(user.email_verified).toLowerCase() === "true";
   return Boolean(userId) && status === ACCOUNT_STATUS.PENDING_EMAIL && !verified && !hasAuthRecord;
+}
+
+function auditIncompletePendingRegistration_(user) {
+  try {
+    appendAuditEvent_({
+      user_id: String(user && user.user_id || ""),
+      action: "registration_recovery_required",
+      outcome: "manual_recovery_required",
+      details: { reason: "MISSING_AUTH_RECORD" }
+    });
+  } catch (error) {
+    console.error("REGISTRATION_RECOVERY_AUDIT_FAILED");
+  }
 }
