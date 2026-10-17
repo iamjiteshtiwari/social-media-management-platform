@@ -37,6 +37,11 @@ function getHeaderMap_(sheet) {
 
 function appendRecord_(sheet, record) {
   const headerMap = getHeaderMap_(sheet);
+  Object.keys(record || {}).forEach(function (key) {
+    if (!Object.prototype.hasOwnProperty.call(headerMap, key)) {
+      throw new Error("SHEET_FIELD_NOT_FOUND:" + key);
+    }
+  });
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
   const row = headers.map(function (header) {
     const key = String(header || "").trim();
