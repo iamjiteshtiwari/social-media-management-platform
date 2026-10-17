@@ -515,7 +515,8 @@ function resetPassword_(input) {
       login_locked_until: "",
       updated_at: nowIso
     });
-    revokeSessionsForUser_(user.user_id, "password_reset", nowIso);
+    // This workflow already holds the script lock; avoid reacquiring it.
+    revokeUserSessionsUnlocked_(user.user_id, "password_reset", nowIso);
     appendAuditEvent_({ user_id: String(user.user_id), action: "password_reset_completed", outcome: "success", details: {} });
     return { ok: true, code: "PASSWORD_RESET_COMPLETE" };
   } finally {
