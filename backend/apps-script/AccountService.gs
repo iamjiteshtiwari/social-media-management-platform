@@ -33,6 +33,7 @@ function updateUserFieldsById_(userId, fields) {
 
 function canAccountAuthenticate_(user) {
   return Boolean(user) && String(user.account_status) === ACCOUNT_STATUS.ACTIVE &&
+    (user.email_verified === true || String(user.email_verified) === "true") &&
     Boolean(user.email_verified_at) && Boolean(user.approved_at) &&
     !user.disabled_at && !user.suspended_at && !user.deleted_at;
 }
