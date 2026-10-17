@@ -120,6 +120,9 @@ function runMediaCleanupForUser_(userId) {
   if (getPrivateProperty_(AppConfig.PROPERTY.ENABLE_MEDIA_CLEANUP) !== "YES") {
     throw new Error("MEDIA_CLEANUP_NOT_ENABLED");
   }
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
+  try {
   const preview = previewMediaCleanupForUser_(userId, MEDIA_RETENTION_DAYS);
   const master = getMasterSpreadsheet_();
   const resourcesSheet = getRequiredSheet_(master, "UserResources");
@@ -169,4 +172,7 @@ function runMediaCleanupForUser_(userId) {
     trashed: results.filter(function (item) { return item.result === "trashed"; }).length,
     results: results
   };
+  } finally {
+    lock.releaseLock();
+  }
 }
