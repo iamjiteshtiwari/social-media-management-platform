@@ -18,9 +18,10 @@
  * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} workbook Operational workbook.
  * @param {string=} nowIso Optional deterministic timestamp for tests.
  * @param {number=} limit Maximum number of candidates to claim (1-25).
+ * @param {string[]=} allowedTargetIds Optional explicit allowlist for controlled tests.
  * @return {{ok:boolean,dryRun:boolean,selected:number,claimed:Array,skipped:Array,now_utc:string,note:string}}
  */
-function claimDuePublishingBatch_(workbook, nowIso, limit) {
+function claimDuePublishingBatch_(workbook, nowIso, limit, allowedTargetIds) {
   if (!workbook) throw new Error("OPERATIONAL_WORKBOOK_REQUIRED");
   const nowValue = nowIso === undefined ? Date.now() : Date.parse(String(nowIso));
   if (!Number.isFinite(nowValue)) throw new Error("INVALID_QUEUE_TIMESTAMP");
@@ -30,12 +31,21 @@ function claimDuePublishingBatch_(workbook, nowIso, limit) {
   }
   assertOperationalWorkbookSchema_(workbook);
 
+  if (allowedTargetIds !== undefined && (!Array.isArray(allowedTargetIds) ||
+      allowedTargetIds.some(function (id) { return typeof id !== "string" || !id.trim(); }))) {
+    throw new Error("INVALID_PUBLISHING_TARGET_ALLOWLIST");
+  }
   const timestamp = new Date(nowValue).toISOString();
-  const queue = previewDuePublishingTargets_(workbook, timestamp, maxItems);
+  const queue = previewDuePublishingTargets_(workbook, timestamp, 100);
+  const allowed = allowedTargetIds === undefined ? null : {};
+  if (allowed) allowedTargetIds.forEach(function (id) { allowed[String(id).trim()] = true; });
+  const candidates = queue.targets.filter(function (candidate) {
+    return !allowed || allowed[candidate.target_id] === true;
+  }).slice(0, maxItems);
   const claimed = [];
   const skipped = [];
 
-  queue.targets.forEach(function (candidate) {
+  candidates.forEach(function (candidate) {
     try {
       const result = claimDuePublishingTarget_(workbook, candidate.target_id, timestamp);
       claimed.push({
@@ -57,7 +67,7 @@ function claimDuePublishingBatch_(workbook, nowIso, limit) {
   return {
     ok: skipped.length === 0,
     dryRun: false,
-    selected: queue.selected,
+    selected: candidates.length,
     claimed: claimed,
     skipped: skipped,
     now_utc: timestamp,
@@ -132,7 +142,7 @@ function testPublishingBatchClaimCoordinator() {
     addTarget(targetIds[1], postIds[1], newestAt);
     addTarget(targetIds[0], postIds[0], oldestAt);
 
-    const result = claimDuePublishingBatch_(workbook, nowIso, 2);
+    const result = claimDuePublishingBatch_(workbook, nowIso, 2, targetIds);
     checks.earliestCandidateClaimedFirst = result.claimed.length === 2 &&
       result.claimed[0].target_id === targetIds[0] &&
       result.claimed[1].target_id === targetIds[1];
