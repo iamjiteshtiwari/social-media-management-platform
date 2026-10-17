@@ -170,6 +170,39 @@ function createUserPost_(userId, input) {
   }
 }
 
+function listUserPosts_(userId, options) {
+  const context = getOperationalContextForUser_(userId);
+  const opts = options || {};
+  const requestedStatus = String(opts.status || "").trim().toLowerCase();
+  const allowedStatuses = ["draft", "scheduled", "publishing", "published", "failed", "cancelled", "deleted"];
+  if (requestedStatus && allowedStatuses.indexOf(requestedStatus) < 0) throw new Error("INVALID_POST_STATUS");
+  const posts = readSheetRecords_(getRequiredSheet_(context.workbook, "Posts"));
+  const limit = Math.min(100, Math.max(1, Number(opts.limit) || 50));
+  const filtered = posts.filter(function (post) {
+    if (!opts.includeDeleted && (post.deleted_at || String(post.status || "").toLowerCase() === "deleted")) return false;
+    if (requestedStatus && String(post.status || "").toLowerCase() !== requestedStatus) return false;
+    if (opts.brand_id && String(post.brand_id || "") !== String(opts.brand_id)) return false;
+    return true;
+  }).sort(function (a, b) {
+    return String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || ""));
+  }).slice(0, limit).map(function (post) {
+    return {
+      post_id: String(post.post_id || ""),
+      brand_id: String(post.brand_id || ""),
+      caption: String(post.caption || ""),
+      first_comment: String(post.first_comment || ""),
+      content_type: String(post.content_type || "text"),
+      status: String(post.status || "draft"),
+      scheduled_at_utc: String(post.scheduled_at_utc || ""),
+      timezone: String(post.timezone || "Asia/Kolkata"),
+      created_at: String(post.created_at || ""),
+      updated_at: String(post.updated_at || ""),
+      deleted_at: String(post.deleted_at || "")
+    };
+  });
+  return { ok: true, posts: filtered };
+}
+
 function updateUserPost_(userId, postId, input) {
   const id = String(postId || "").trim();
   const value = input || {};
@@ -244,6 +277,7 @@ function deleteUserPost_(userId, postId) {
     }
     const now = new Date().toISOString();
     updateSheetRowFields_(posts, match.rowNumber, { status: "deleted", deleted_at: now, updated_at: now });
+    cancelPostTargets_(context.workbook, id, now);
     appendAuditEvent_({
       user_id: String(userId),
       action: "post_soft_deleted",
@@ -269,4 +303,30 @@ function readSheetRecords_(sheet) {
     });
     return record;
   });
+}
+
+/** Cancel queued targets whenever a post is soft-deleted or cancelled. */
+function cancelPostTargets_(workbook, postId, nowIso) {
+  const targets = getRequiredSheet_(workbook, "PostTargets");
+  const match = getHeaderMap_(targets);
+  if (!Object.prototype.hasOwnProperty.call(match, "post_id") ||
+      !Object.prototype.hasOwnProperty.call(match, "platform_status")) {
+    throw new Error("POST_TARGET_SCHEMA_INVALID");
+  }
+  if (targets.getLastRow() < 2) return 0;
+  const rows = targets.getRange(2, 1, targets.getLastRow() - 1, targets.getLastColumn()).getValues();
+  let changed = 0;
+  rows.forEach(function (values, index) {
+    const record = rowToRecord_(targets, { values: values });
+    if (String(record.post_id || "") !== String(postId)) return;
+    const status = String(record.platform_status || "").toLowerCase();
+    if (["published", "publishing"].indexOf(status) >= 0) return;
+    updateSheetRowFields_(targets, index + 2, {
+      platform_status: "cancelled",
+      next_retry_at: "",
+      updated_at: nowIso
+    });
+    changed++;
+  });
+  return changed;
 }
