@@ -62,7 +62,7 @@ function createUserBrand_(userId, input) {
   const timezone = String(value.timezone || "Asia/Kolkata").trim();
   if (name.length < 2 || name.length > 100 || description.length > 1000 ||
       website.length > 500 || (website && !/^https?:\/\//i.test(website)) ||
-      !/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)+$/.test(timezone)) {
+      !/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)*$/.test(timezone)) {
     throw new Error("INVALID_BRAND");
   }
   const lock = LockService.getScriptLock();
@@ -104,7 +104,7 @@ function updateUserBrand_(userId, brandId, input) {
   }
   if (Object.prototype.hasOwnProperty.call(value, "timezone")) {
     const timezone = String(value.timezone || "").trim();
-    if (!/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)+$/.test(timezone)) throw new Error("INVALID_BRAND");
+    if (!/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)*$/.test(timezone)) throw new Error("INVALID_BRAND");
     fields.timezone = timezone;
   }
   if (!id || !Object.keys(fields).length) throw new Error("INVALID_BRAND_UPDATE");
@@ -137,7 +137,7 @@ function createUserPost_(userId, input) {
   if (!brandId || caption.length > 5000 || firstComment.length > 2200 ||
       ["text", "image", "video", "carousel", "reel", "story"].indexOf(contentType) < 0 ||
       ["draft", "scheduled"].indexOf(status) < 0 ||
-      !/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)+$/.test(timezone)) {
+      !/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)*$/.test(timezone)) {
     throw new Error("INVALID_POST");
   }
   let scheduledAt = "";
@@ -348,7 +348,7 @@ function updateUserPost_(userId, postId, input) {
   }
   if (Object.prototype.hasOwnProperty.call(fields, "timezone")) {
     fields.timezone = String(fields.timezone || "").trim();
-    if (!/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)+$/.test(fields.timezone)) throw new Error("INVALID_POST");
+    if (!/^[A-Za-z_]+(?:\/[A-Za-z0-9_+\-]+)*$/.test(fields.timezone)) throw new Error("INVALID_POST");
   }
   if (Object.prototype.hasOwnProperty.call(fields, "scheduled_at_utc")) {
     const raw = String(fields.scheduled_at_utc || "").trim();
