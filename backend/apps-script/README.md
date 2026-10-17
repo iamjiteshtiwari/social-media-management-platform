@@ -20,18 +20,21 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 
 ## Modules
 
-- `Api.gs`: small request entry point and safe response contract.
-- `Config.gs`: server-side Script Properties access.
-- `PasswordService.gs`: server-side PBKDF2-HMAC-SHA-256 password hashing and verification.
-- `AccountService.gs`: registration, server-side CAPTCHA checks, email OTP verification/resend, login service logic, logout/current-session functions, and password recovery. Repeated invalid passwords trigger a 15-minute account lockout after five failures.
-- `SessionService.gs`: fixed nine-hour absolute session expiry, one active session per user, verifier-only session storage, logout and revocation helpers.
-- `AccountAdminService.gs`: pending-account approval, suspend/disable/reactivate controls, session revocation and owner-requested account deletion with profile anonymization.
+- `Api.gs`: small request entry point, route guards and safe response contract.
+- `Config.gs`: private Script Properties access and CAPTCHA configuration.
+- `AccountService.gs`: shared account rules, email normalization and account-authentication eligibility.
+- `RegistrationService.gs`: registration, email verification, and OTP resend workflows; public registration remains feature-gated.
+- `OtpService.gs`: OTP creation, HMAC verifier generation, latest-challenge lookup and one-time consumption.
+- `LoginService.gs`: login, logout, current-session lookup and login-failure throttling.
+- `PasswordRecoveryService.gs`: password-reset request and reset workflows; public recovery remains feature-gated.
+- `PasswordService.gs`: PBKDF2-HMAC-SHA-256 password hashing and verification.
+- `SessionService.gs`: fixed nine-hour absolute expiry, one active session per user, verifier-only session storage, logout and revocation helpers.
+- `AccountAdminService.gs`: approval, suspend/disable/reactivate, profile-anonymizing self-deletion, and guarded manual first-admin bootstrap.
 - `CaptchaService.gs`: server-side Google reCAPTCHA verification for registration/login.
-- `AccountAdminService.gs`: approval, suspend/disable/reactivate, profile-anonymizing self-deletion, and a guarded manual first-admin bootstrap.
 - `Schema.gs`: versioned master and operational sheet column definitions.
-- `SheetRepository.gs`: spreadsheet access and safe header/record helpers.
+- `SheetRepository.gs`: shared spreadsheet access, row conversion, header validation, targeted updates and audit writes.
 - `HealthService.gs`: non-sensitive health information.
-- `Tests.gs`: safe self-tests for schema contracts, CAPTCHA rejection of missing tokens, and scaffold readiness.
+- `Tests.gs`: safe self-tests for schema contracts, password hashing, session policy and scaffold readiness.
 - `OperationalSetup.gs`: read-only cross-account access check and explicitly gated initialization for a disposable work-owned operational test sheet.
 
 Keep modules independent so future providers, social networks, queues, and storage adapters can be added without rewriting the request router.
