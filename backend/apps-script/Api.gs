@@ -61,9 +61,23 @@ function doPost(e) {
 
     return jsonResponse_({ ok: false, code: "ACTION_NOT_AVAILABLE", message: "This operation is not enabled." });
   } catch (error) {
+    // Return safe validation feedback without exposing internal exception details.
+    const errorCode = String(error && error.message || "");
+    if (errorCode === "INVALID_REGISTRATION") {
+      return jsonResponse_({
+        ok: false,
+        code: "INVALID_REGISTRATION",
+        message: "Check the required fields and try again."
+      });
+    }
+
     // Never return exception text, spreadsheet details, or stack traces.
     console.error("API_OPERATION_FAILED");
-    return jsonResponse_({ ok: false, code: "TEMPORARILY_UNAVAILABLE", message: "The request could not be completed. Please try again later." });
+    return jsonResponse_({
+      ok: false,
+      code: "TEMPORARILY_UNAVAILABLE",
+      message: "The request could not be completed. Please try again later."
+    });
   }
 }
 
