@@ -105,7 +105,7 @@ function previewMediaCleanupForUser_(userId, retentionDays) {
     cutoffUtc: new Date(cutoff).toISOString(),
     candidateCount: candidates.length,
     candidates: candidates.map(function (item) {
-      return { rowNumber: item.rowNumber, mediaId: item.mediaId, fileName: item.fileName, uploadedAt: item.uploadedAt };
+      return { rowNumber: item.rowNumber, mediaId: item.mediaId, fileId: item.fileId, fileName: item.fileName, uploadedAt: item.uploadedAt };
     }),
     skipped: skipped
   };
