@@ -100,12 +100,16 @@ function deleteOwnAccount_(sessionToken, password) {
   if (!context) return { ok: false, code: "SESSION_INVALID" };
 
   const user = context.user;
+  const authRecords = getRequiredSheet_(getMasterSpreadsheet_(), "AuthRecords");
+  const authMatch = findRecordByValue_(authRecords, "user_id", String(user.user_id));
+  if (!authMatch) return { ok: false, code: "REAUTHENTICATION_REQUIRED" };
+  const auth = rowToRecord_(authRecords, authMatch);
   const passwordOk = verifyPassword_(
     String(password || ""),
-    String(user.password_salt || ""),
-    String(user.password_hash || ""),
-    String(user.password_hash_algorithm || ""),
-    Number(user.password_hash_iterations)
+    String(auth.password_salt || ""),
+    String(auth.password_hash || ""),
+    String(auth.password_hash_algorithm || ""),
+    Number(auth.password_hash_iterations)
   );
   if (!passwordOk) return { ok: false, code: "REAUTHENTICATION_REQUIRED" };
 
@@ -126,8 +130,6 @@ function deleteOwnAccount_(sessionToken, password) {
       deleted_at: now,
       updated_at: now
     });
-  const authRecords = getRequiredSheet_(getMasterSpreadsheet_(), "AuthRecords");
-  const authMatch = findRecordByValue_(authRecords, "user_id", String(user.user_id));
   if (authMatch) {
     updateSheetRowFields_(authRecords, authMatch.rowNumber, {
       password_hash: "",
@@ -190,7 +192,8 @@ function bootstrapFirstAdminAccount() {
     const now = new Date().toISOString();
     updateSheetRowFields_(users, match.rowNumber, {
       role: "admin",
-      status: ACCOUNT_STATUS.ACTIVE,
+      account_status: ACCOUNT_STATUS.ACTIVE,
+      registration_status: "completed",
       status_reason: "",
       approved_at: now,
       updated_at: now
