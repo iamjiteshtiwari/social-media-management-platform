@@ -171,6 +171,17 @@ function runBackendSelfTests() {
       schema.PostMedia.indexOf("post_id") >= 0;
   });
 
+  check("operational service fields match the canonical schema", function () {
+    const schema = getOperationalSchema_();
+    return ["brand_id", "brand_name", "timezone", "status"].every(function (key) {
+      return schema.Brands.indexOf(key) >= 0;
+    }) &&
+      ["post_id", "brand_id", "caption", "first_comment", "content_type", "status", "scheduled_at_utc", "deleted_at"]
+        .every(function (key) { return schema.Posts.indexOf(key) >= 0; }) &&
+      ["post_id", "platform_status", "next_retry_at", "updated_at"]
+        .every(function (key) { return schema.PostTargets.indexOf(key) >= 0; });
+  });
+
   const passed = results.filter(function (result) { return result.passed; }).length;
   return {
     ok: passed === results.length,
