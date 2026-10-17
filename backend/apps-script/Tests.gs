@@ -145,6 +145,23 @@ function runBackendSelfTests() {
       PASSWORD_HASH_ITERATIONS >= 100000;
   });
 
+  check("incomplete registration is detected without permitting credential takeover", function () {
+    const pending = {
+      user_id: "user-test",
+      account_status: ACCOUNT_STATUS.PENDING_EMAIL,
+      email_verified: false
+    };
+    return isIncompletePendingRegistration_(pending, false) === true &&
+      isIncompletePendingRegistration_(pending, true) === false &&
+      isIncompletePendingRegistration_(Object.assign({}, pending, {
+        account_status: ACCOUNT_STATUS.ACTIVE
+      }), false) === false &&
+      isIncompletePendingRegistration_(Object.assign({}, pending, {
+        email_verified: true
+      }), false) === false &&
+      isIncompletePendingRegistration_(null, false) === false;
+  });
+
   const passed = results.filter(function (result) { return result.passed; }).length;
   return {
     ok: passed === results.length,
