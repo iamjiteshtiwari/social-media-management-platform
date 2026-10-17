@@ -60,6 +60,7 @@ function initializeOperationalTestSchema() {
     AppConfig.PROPERTY.OPERATIONAL_TEST_SPREADSHEET_ID
   );
   const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+  validateNoLegacySchemaTabs_(spreadsheet, ["SocialAccounts", "Content", "PublishingQueue", "Notifications", "AuditLog", "ResourceMap"]);
   const schema = getOperationalSchema_();
   validateSchemaCompatibility_(spreadsheet, schema);
 
