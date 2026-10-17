@@ -14,7 +14,27 @@ function registerAccount_(input) {
 
   try {
     const users = getRequiredSheet_(getMasterSpreadsheet_(), "Users");
-    if (findRecordByValue_(users, "email", data.email)) {
+    const existingEmailMatch = findRecordByValue_(users, "email", data.email);
+    if (existingEmailMatch) {
+      const existingUser = rowToRecord_(users, existingEmailMatch);
+      const authSheet = getRequiredSheet_(getMasterSpreadsheet_(), "AuthRecords");
+      const authMatch = findRecordByValue_(authSheet, "user_id", String(existingUser.user_id || ""));
+      if (isIncompletePendingRegistration_(existingUser, Boolean(authMatch))) {
+        // Never attach a new password to an existing account without proving
+        // mailbox ownership. Record the anomaly for owner-reviewed repair.
+        try {
+          appendAuditEvent_({
+            user_id: String(existingUser.user_id),
+            action: "registration_recovery_required",
+            outcome: "manual_recovery_required",
+            details: { reason: "MISSING_AUTH_RECORD" }
+          });
+        } catch (auditError) {
+          console.error("REGISTRATION_RECOVERY_AUDIT_FAILED");
+        }
+      }
+      // Keep a generic response to prevent account enumeration; never mutate
+      // password or identity fields for an existing email address.
       return { ok: true, code: "REGISTRATION_ACCEPTED", nextStep: "check_email" };
     }
     if (findRecordByValue_(users, "username", data.username)) {
@@ -234,4 +254,14 @@ function normalizeRegistrationInput_(input) {
   if (password.length < 12 || password.length > 128) throw new Error("INVALID_REGISTRATION");
 
   return { fullName: fullName, username: username, email: email, phone: phone, password: password };
+}
+
+
+/** Pure detector for a pending account whose credential record is missing. */
+function isIncompletePendingRegistration_(user, hasAuthRecord) {
+  if (!user || typeof user !== "object") return false;
+  const userId = String(user.user_id || "").trim();
+  const status = String(user.account_status || "");
+  const verified = user.email_verified === true || String(user.email_verified).toLowerCase() === "true";
+  return Boolean(userId) && status === ACCOUNT_STATUS.PENDING_EMAIL && !verified && !hasAuthRecord;
 }
