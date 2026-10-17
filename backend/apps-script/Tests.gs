@@ -190,6 +190,13 @@ function runBackendSelfTests() {
       }) && schema.PostMedia.indexOf("media_id") >= 0;
   });
 
+  check("media uploads validate declared MIME against file signature", function () {
+    return isAllowedMediaSignature_([0xFF, 0xD8, 0xFF, 0x00], "image/jpeg") &&
+      isAllowedMediaSignature_([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], "image/png") &&
+      isAllowedMediaSignature_([0x1A, 0x45, 0xDF, 0xA3], "video/webm") &&
+      !isAllowedMediaSignature_([0x00, 0x01, 0x02, 0x03], "image/jpeg");
+  });
+
   const passed = results.filter(function (result) { return result.passed; }).length;
   return {
     ok: passed === results.length,
