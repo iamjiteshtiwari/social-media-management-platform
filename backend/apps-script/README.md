@@ -39,6 +39,7 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `MaintenanceService.gs`: manual-only, opt-in 30-day media cleanup preview/execution; protects media referenced by posts and never deletes external social content.
 - `OperationalService.gs`: internal business rules for user-owned brands and posts, schedule validation, soft deletion, and cancellation of queued post targets.
 - `MediaService.gs`: size-limited uploads to each user's mapped Drive media folder, MediaLibrary registration, and guarded deletion of unreferenced media.
+- `OperationalService.gs` also supports ordered media attachments and per-post target records; actual OAuth provider verification and publishing adapters are not implemented by these data-layer helpers.
 
 Keep modules independent so future providers, social networks, queues, and storage adapters can be added without rewriting the request router.
 
