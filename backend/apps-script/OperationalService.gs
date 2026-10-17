@@ -228,11 +228,10 @@ function addUserPostMedia_(userId, postId, mediaIds) {
     });
     const alreadyLinked = {};
     currentLinks.forEach(function (row) { alreadyLinked[String(row.media_id || "")] = true; });
+    if (ids.some(function (mediaId) { return alreadyLinked[mediaId]; })) throw new Error("MEDIA_ALREADY_ATTACHED");
     const existingOrders = currentLinks.map(function (row) { return Number(row.sort_order) || 0; });
     let order = existingOrders.length ? Math.max.apply(null, existingOrders) + 1 : 1;
-    const now = new Date().toISOString();
-    ids.forEach(function (mediaId) {
-      if (alreadyLinked[mediaId]) throw new Error("MEDIA_ALREADY_ATTACHED");
+    const validatedMedia = ids.map(function (mediaId) {
       const mediaMatch = findRecordByValue_(library, "media_id", mediaId);
       if (!mediaMatch) throw new Error("MEDIA_NOT_FOUND");
       const media = rowToRecord_(library, mediaMatch);
@@ -240,18 +239,22 @@ function addUserPostMedia_(userId, postId, mediaIds) {
           String(media.retention_status || "").toLowerCase() === "protected") {
         throw new Error("MEDIA_NOT_AVAILABLE");
       }
+      return { mediaId: mediaId, rowNumber: mediaMatch.rowNumber };
+    });
+    const now = new Date().toISOString();
+    // Validate the entire request before the first write to avoid input-driven partial updates.
+    validatedMedia.forEach(function (item) {
       appendRecord_(links, {
         post_media_id: Utilities.getUuid(),
         post_id: postKey,
-        media_id: mediaId,
+        media_id: item.mediaId,
         sort_order: order++,
         created_at: now
       });
-      updateSheetRowFields_(library, mediaMatch.rowNumber, {
+      updateSheetRowFields_(library, item.rowNumber, {
         last_referenced_at: now,
         cleanup_eligible_at: ""
       });
-      alreadyLinked[mediaId] = true;
     });
     updateSheetRowFields_(posts, postMatch.rowNumber, { updated_at: now });
     return { ok: true, code: "POST_MEDIA_ATTACHED", post_id: postKey, attached_count: ids.length };
@@ -364,8 +367,13 @@ function updateUserPost_(userId, postId, input) {
     if (post.deleted_at || ["published", "publishing", "deleted"].indexOf(String(post.status || "").toLowerCase()) >= 0) {
       throw new Error("POST_NOT_EDITABLE");
     }
-    if (fields.status === "scheduled" && !fields.scheduled_at_utc && !post.scheduled_at_utc) {
-      throw new Error("INVALID_SCHEDULE_TIME");
+    if (fields.status === "scheduled") {
+      const effectiveSchedule = Object.prototype.hasOwnProperty.call(fields, "scheduled_at_utc")
+        ? fields.scheduled_at_utc : String(post.scheduled_at_utc || "");
+      const scheduleTime = Date.parse(effectiveSchedule);
+      if (!effectiveSchedule || !Number.isFinite(scheduleTime) || scheduleTime <= Date.now()) {
+        throw new Error("INVALID_SCHEDULE_TIME");
+      }
     }
     const updatedAt = new Date().toISOString();
     fields.updated_at = updatedAt;
