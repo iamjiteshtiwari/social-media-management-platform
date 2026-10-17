@@ -197,6 +197,14 @@ function runBackendSelfTests() {
       !isAllowedMediaSignature_([0x00, 0x01, 0x02, 0x03], "image/jpeg");
   });
 
+  check("post media replacement preserves a canonical link contract", function () {
+    const schema = getOperationalSchema_();
+    return ["post_media_id", "post_id", "media_id", "sort_order", "created_at"]
+      .every(function (key) { return schema.PostMedia.indexOf(key) >= 0; }) &&
+      ["media_id", "cleanup_eligible_at", "last_referenced_at", "updated_at"]
+      .every(function (key) { return schema.MediaLibrary.indexOf(key) >= 0; });
+  });
+
   const passed = results.filter(function (result) { return result.passed; }).length;
   return {
     ok: passed === results.length,
