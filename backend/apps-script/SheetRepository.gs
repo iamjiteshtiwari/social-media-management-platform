@@ -72,19 +72,32 @@ function findRecordByValue_(sheet, columnName, expectedValue) {
 
 function appendAuditEvent_(event) {
   const spreadsheet = getMasterSpreadsheet_();
-  const sheet = getRequiredSheet_(spreadsheet, "AuditLog");
+  const sheet = getRequiredSheet_(spreadsheet, "AuditLogs");
+  const details = event.details && typeof event.details === "object" ? event.details : {};
+  const actorId = String(event.actor_id || details.actor_user_id || event.user_id || "");
+  const safeMetadata = {};
+  const allowedMetadataKeys = [
+    "method", "reason", "attempt", "locked", "next_status", "previous_status",
+    "deletion_type", "latest_challenge_only", "actor_user_id"
+  ];
+  allowedMetadataKeys.forEach(function (key) {
+    if (Object.prototype.hasOwnProperty.call(details, key)) safeMetadata[key] = details[key];
+  });
   const safeEvent = {
-    event_id: event.event_id || Utilities.getUuid(),
-    user_id: event.user_id || "",
-    action: String(event.action || "unknown").slice(0, 80),
-    outcome: String(event.outcome || "unknown").slice(0, 40),
+    audit_event_id: event.audit_event_id || Utilities.getUuid(),
     occurred_at: event.occurred_at || new Date().toISOString(),
+    actor_type: String(event.actor_type || (details.actor_user_id ? "admin" : (event.user_id ? "user" : "system"))).slice(0, 20),
+    actor_id: actorId.slice(0, 100),
+    action: String(event.action || "unknown").slice(0, 80),
+    target_type: String(event.target_type || (event.user_id ? "user" : "")).slice(0, 40),
+    target_id: String(event.target_id || event.user_id || "").slice(0, 100),
+    outcome: String(event.outcome || "unknown").slice(0, 40),
+    reason_code: String(event.reason_code || details.reason || "").slice(0, 80),
     request_id: String(event.request_id || "").slice(0, 80),
-    details_json: JSON.stringify(event.details || {}).slice(0, 1500)
+    metadata_json: JSON.stringify(safeMetadata).slice(0, 1500)
   };
   return appendRecord_(sheet, safeEvent);
 }
-
 
 /**
  * Converts a repository row match into an object keyed by the sheet headers.
