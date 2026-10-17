@@ -17,9 +17,9 @@ const ALLOWED_MEDIA_MIME_TYPES = Object.freeze({
 
 function uploadUserMedia_(userId, input) {
   const value = input || {};
-  const fileName = String(value.file_name || "").trim().replace(/[\\/\\r\\n\\0]/g, "_");
+  const fileName = String(value.file_name || "").trim().replace(/[\\/\r\n\0]/g, "_");
   const mimeType = String(value.mime_type || "").trim().toLowerCase();
-  const encoded = String(value.base64_data || "").replace(/^data:[^,]*;base64,/i, "").replace(/\\s/g, "");
+  const encoded = String(value.base64_data || "").replace(/^data:[^,]*;base64,/i, "").replace(/\s/g, "");
   if (!fileName || fileName.length > 180 || !Object.prototype.hasOwnProperty.call(ALLOWED_MEDIA_MIME_TYPES, mimeType) ||
       !encoded || encoded.length > Math.ceil(MAX_MEDIA_UPLOAD_BYTES * 4 / 3) + 16) {
     throw new Error("INVALID_MEDIA_UPLOAD");
