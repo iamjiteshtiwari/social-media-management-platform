@@ -105,7 +105,7 @@ function runBackendSelfTests() {
     return EMAIL_OTP_TTL_MS === 5 * 60 * 1000 &&
       EMAIL_OTP_MAX_ATTEMPTS === 5 &&
       EMAIL_OTP_RESEND_COOLDOWN_MS === 60 * 1000 &&
-      SESSION_TTL_MS === 9 * 60 * 60 * 1000 &&
+      SESSION_ABSOLUTE_LIFETIME_MS === 9 * 60 * 60 * 1000 &&
       PASSWORD_HASH_ALGORITHM === "PBKDF2-HMAC-SHA256" &&
       PASSWORD_HASH_ITERATIONS >= 100000;
   });
