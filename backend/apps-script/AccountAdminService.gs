@@ -13,13 +13,14 @@ function approvePendingAccount_(sessionToken, targetUserId) {
   if (!match) return { ok: false, code: "ACCOUNT_NOT_AVAILABLE" };
 
   const target = rowToRecord_(users, match);
-  if (target.status !== ACCOUNT_STATUS.PENDING_APPROVAL || !target.email_verified_at) {
+  if (target.account_status !== ACCOUNT_STATUS.PENDING_APPROVAL || !target.email_verified_at) {
     return { ok: false, code: "ACCOUNT_NOT_AVAILABLE" };
   }
 
   const now = new Date().toISOString();
   updateSheetRowFields_(users, match.rowNumber, {
-    status: ACCOUNT_STATUS.ACTIVE,
+    account_status: ACCOUNT_STATUS.ACTIVE,
+    registration_status: "completed",
     status_reason: "",
     approved_at: now,
     updated_at: now
@@ -51,7 +52,7 @@ function adminSetAccountStatus_(sessionToken, targetUserId, nextStatus, reason) 
   if (!match) return { ok: false, code: "ACCOUNT_NOT_AVAILABLE" };
 
   const target = rowToRecord_(users, match);
-  if (target.status === ACCOUNT_STATUS.DELETED) {
+  if (target.account_status === ACCOUNT_STATUS.DELETED) {
     return { ok: false, code: "ACCOUNT_NOT_AVAILABLE" };
   }
   if (String(target.user_id) === String(actor.user.user_id) &&
@@ -65,7 +66,7 @@ function adminSetAccountStatus_(sessionToken, targetUserId, nextStatus, reason) 
 
   const now = new Date().toISOString();
   const fields = {
-    status: String(nextStatus),
+    account_status: String(nextStatus),
     status_reason: String(reason || "").trim().slice(0, 300),
     updated_at: now
   };
@@ -86,7 +87,7 @@ function adminSetAccountStatus_(sessionToken, targetUserId, nextStatus, reason) 
     outcome: "success",
     details: {
       actor_user_id: actor.user.user_id,
-      previous_status: target.status,
+      previous_status: target.account_status,
       next_status: nextStatus,
       reason: String(reason || "").trim().slice(0, 300)
     }
@@ -114,19 +115,31 @@ function deleteOwnAccount_(sessionToken, password) {
     context.userRowNumber, {
       full_name: "Deleted account",
       username: deletedUsername,
-      email_normalized: "",
+      email: "",
       phone: "",
+      role: "member",
+      account_status: ACCOUNT_STATUS.DELETED,
+      registration_status: "completed",
+      email_verified: false,
+      email_verified_at: "",
+      status_reason: "Deleted by account owner",
+      deleted_at: now,
+      updated_at: now
+    });
+  const authRecords = getRequiredSheet_(getMasterSpreadsheet_(), "AuthRecords");
+  const authMatch = findRecordByValue_(authRecords, "user_id", String(user.user_id));
+  if (authMatch) {
+    updateSheetRowFields_(authRecords, authMatch.rowNumber, {
       password_hash: "",
       password_salt: "",
       password_hash_algorithm: "",
       password_hash_iterations: "",
       password_changed_at: "",
-      role: "member",
-      status: ACCOUNT_STATUS.DELETED,
-      status_reason: "Deleted by account owner",
-      deleted_at: now,
+      failed_login_count: 0,
+      login_locked_until: "",
       updated_at: now
     });
+  }
   revokeSessionsForUser_(user.user_id, "account_deleted", now);
   appendAuditEvent_({
     user_id: user.user_id,
@@ -163,15 +176,15 @@ function bootstrapFirstAdminAccount() {
       const rows = users.getRange(2, 1, lastRow - 1, users.getLastColumn()).getValues();
       for (let i = 0; i < rows.length; i++) {
         const record = rowToRecord_(users, { values: rows[i] });
-        if (String(record.role) === "admin" && String(record.status) !== ACCOUNT_STATUS.DELETED) {
+        if (String(record.role) === "admin" && String(record.account_status) !== ACCOUNT_STATUS.DELETED) {
           throw new Error("ADMIN_ALREADY_EXISTS");
         }
       }
     }
-    const match = findRecordByValue_(users, "email_normalized", configuredEmail);
+    const match = findRecordByValue_(users, "email", configuredEmail);
     if (!match) throw new Error("BOOTSTRAP_ACCOUNT_NOT_FOUND");
     const user = rowToRecord_(users, match);
-    if (user.status !== ACCOUNT_STATUS.PENDING_APPROVAL || !user.email_verified_at) {
+    if (user.account_status !== ACCOUNT_STATUS.PENDING_APPROVAL || user.email_verified !== true && String(user.email_verified) !== "true" || !user.email_verified_at) {
       throw new Error("BOOTSTRAP_ACCOUNT_MUST_HAVE_VERIFIED_EMAIL");
     }
     const now = new Date().toISOString();
