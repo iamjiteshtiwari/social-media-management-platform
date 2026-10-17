@@ -277,6 +277,89 @@ function addUserPostMedia_(userId, postId, mediaIds) {
   }
 }
 
+/**
+ * Replaces a draft's media selection. Existing links are removed only after
+ * every requested replacement item has been validated. Media files themselves
+ * are never deleted by this operation.
+ */
+function replaceUserPostMedia_(userId, postId, mediaIds) {
+  const postKey = String(postId || "").trim();
+  const ids = Array.isArray(mediaIds) ? mediaIds.map(function (value) {
+    return String(value || "").trim();
+  }).filter(Boolean) : [];
+  if (!postKey || ids.length > 10 || ids.some(function (id) { return id.length > 100; })) {
+    throw new Error("INVALID_POST_MEDIA");
+  }
+  if (new Set(ids).size !== ids.length) throw new Error("DUPLICATE_MEDIA_ID");
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
+  try {
+    const context = getOperationalContextForUser_(userId);
+    const posts = getRequiredSheet_(context.workbook, "Posts");
+    const postMatch = findRecordByValue_(posts, "post_id", postKey);
+    if (!postMatch) throw new Error("POST_NOT_FOUND");
+    const post = rowToRecord_(posts, postMatch);
+    if (post.deleted_at || ["published", "publishing", "deleted"].indexOf(String(post.status || "").toLowerCase()) >= 0) {
+      throw new Error("POST_MEDIA_NOT_EDITABLE");
+    }
+    const library = getRequiredSheet_(context.workbook, "MediaLibrary");
+    const links = getRequiredSheet_(context.workbook, "PostMedia");
+    const currentLinks = readSheetRecords_(links).filter(function (row) {
+      return String(row.post_id || "") === postKey;
+    });
+    const validated = ids.map(function (mediaId) {
+      const match = findRecordByValue_(library, "media_id", mediaId);
+      if (!match) throw new Error("MEDIA_NOT_FOUND");
+      const media = rowToRecord_(library, match);
+      if (String(media.status || "").toLowerCase() !== "available" ||
+          String(media.retention_status || "").toLowerCase() === "protected") {
+        throw new Error("MEDIA_NOT_AVAILABLE");
+      }
+      return { mediaId: mediaId, rowNumber: match.rowNumber };
+    });
+
+    // The request is fully validated before existing links are removed.
+    currentLinks.forEach(function (link) {
+      const linkMatch = findRecordByValue_(links, "post_media_id", String(link.post_media_id || ""));
+      if (linkMatch) links.deleteRow(linkMatch.rowNumber);
+    });
+
+    const now = new Date().toISOString();
+    validated.forEach(function (item, index) {
+      appendRecord_(links, {
+        post_media_id: Utilities.getUuid(),
+        post_id: postKey,
+        media_id: item.mediaId,
+        sort_order: index + 1,
+        created_at: now
+      });
+      updateSheetRowFields_(library, item.rowNumber, {
+        last_referenced_at: now,
+        cleanup_eligible_at: ""
+      });
+    });
+
+    // Mark removed media as cleanup-eligible only when no other post references it.
+    const remaining = readSheetRecords_(links);
+    const remainingIds = {};
+    remaining.forEach(function (link) { remainingIds[String(link.media_id || "")] = true; });
+    currentLinks.forEach(function (link) {
+      const removedId = String(link.media_id || "");
+      if (removedId && !remainingIds[removedId]) {
+        const match = findRecordByValue_(library, "media_id", removedId);
+        if (match) updateSheetRowFields_(library, match.rowNumber, {
+          cleanup_eligible_at: now,
+          updated_at: now
+        });
+      }
+    });
+    updateSheetRowFields_(posts, postMatch.rowNumber, { updated_at: now });
+    return { ok: true, code: "POST_MEDIA_REPLACED", post_id: postKey, attached_count: validated.length };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function createUserPostTarget_(userId, postId, socialConnectionId) {
   const postKey = String(postId || "").trim();
   const connectionKey = String(socialConnectionId || "").trim();
