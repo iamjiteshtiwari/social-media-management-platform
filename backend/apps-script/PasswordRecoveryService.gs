@@ -15,7 +15,7 @@ function requestPasswordReset_(input) {
   try {
     const master = getMasterSpreadsheet_();
     const users = getRequiredSheet_(master, "Users");
-    const match = findRecordByValue_(users, "email_normalized", email);
+    const match = findRecordByValue_(users, "email", email);
     if (!match) return { ok: true, code: "RESET_REQUEST_ACCEPTED" };
     const user = rowToRecord_(users, match);
     if (!canAccountAuthenticate_(user)) return { ok: true, code: "RESET_REQUEST_ACCEPTED" };
@@ -79,10 +79,14 @@ function resetPassword_(input) {
   try {
     const master = getMasterSpreadsheet_();
     const users = getRequiredSheet_(master, "Users");
-    const match = findRecordByValue_(users, "email_normalized", email);
+    const match = findRecordByValue_(users, "email", email);
     if (!match) return { ok: false, code: "INVALID_RESET" };
     const user = rowToRecord_(users, match);
     if (!canAccountAuthenticate_(user)) return { ok: false, code: "INVALID_RESET" };
+
+    const authRecords = getRequiredSheet_(master, "AuthRecords");
+    const authMatch = findRecordByValue_(authRecords, "user_id", String(user.user_id));
+    if (!authMatch) return { ok: false, code: "INVALID_RESET" };
 
     const challenges = getRequiredSheet_(master, "AuthChallenges");
     const latest = findLatestChallenge_(challenges, user.user_id, "password_reset");
@@ -107,13 +111,13 @@ function resetPassword_(input) {
     // Revoke sessions before updating the password. This workflow already holds
     // the script lock, so call the unlocked helper to avoid reacquiring it.
     revokeUserSessionsUnlocked_(user.user_id, "password_reset", nowIso);
-    updateSheetRowFields_(users, match.rowNumber, {
+    updateSheetRowFields_(authRecords, authMatch.rowNumber, {
       password_hash: hashed.hash,
       password_salt: hashed.salt,
       password_hash_algorithm: hashed.algorithm,
       password_hash_iterations: hashed.iterations,
       password_changed_at: nowIso,
-      login_failed_count: 0,
+      failed_login_count: 0,
       login_locked_until: "",
       updated_at: nowIso
     });
