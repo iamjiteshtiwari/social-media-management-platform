@@ -36,6 +36,7 @@ The implementation must stay modular: API router, authentication, CAPTCHA, sessi
 - `HealthService.gs`: non-sensitive health information.
 - `Tests.gs`: safe self-tests for schema contracts, password hashing, session policy and scaffold readiness.
 - `OperationalSetup.gs`: read-only cross-account access check and explicitly gated initialization for a disposable work-owned operational test sheet.
+- `MaintenanceService.gs`: manual-only, opt-in 30-day media cleanup preview/execution; protects media referenced by posts and never deletes external social content.
 
 Keep modules independent so future providers, social networks, queues, and storage adapters can be added without rewriting the request router.
 
