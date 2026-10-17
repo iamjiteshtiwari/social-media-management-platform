@@ -77,7 +77,7 @@ function appendAuditEvent_(event) {
   const actorId = String(event.actor_id || details.actor_user_id || event.user_id || "");
   const safeMetadata = {};
   const allowedMetadataKeys = [
-    "method", "reason", "attempt", "locked", "next_status", "previous_status",
+    "method", "attempt", "attempts", "locked", "next_status", "previous_status",
     "deletion_type", "latest_challenge_only", "actor_user_id"
   ];
   allowedMetadataKeys.forEach(function (key) {
@@ -92,7 +92,7 @@ function appendAuditEvent_(event) {
     target_type: String(event.target_type || (event.user_id ? "user" : "")).slice(0, 40),
     target_id: String(event.target_id || event.user_id || "").slice(0, 100),
     outcome: String(event.outcome || "unknown").slice(0, 40),
-    reason_code: String(event.reason_code || details.reason || "").slice(0, 80),
+    reason_code: String(event.reason_code || (/^[A-Z0-9_]{1,80}$/.test(String(details.reason || "")) ? details.reason : "")).slice(0, 80),
     request_id: String(event.request_id || "").slice(0, 80),
     metadata_json: JSON.stringify(safeMetadata).slice(0, 1500)
   };
