@@ -31,6 +31,7 @@ function uploadUserMedia_(userId, input) {
     throw new Error("INVALID_MEDIA_UPLOAD");
   }
   if (!bytes.length || bytes.length > MAX_MEDIA_UPLOAD_BYTES) throw new Error("MEDIA_SIZE_LIMIT");
+  if (!isAllowedMediaSignature_(bytes, mimeType)) throw new Error("MEDIA_CONTENT_TYPE_MISMATCH");
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
   let createdFile = null;
@@ -133,4 +134,20 @@ function deleteUserMedia_(userId, mediaId) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function isAllowedMediaSignature_(bytes, mimeType) {
+  const byte = function (index) { return (Number(bytes[index] || 0) + 256) % 256; };
+  const ascii = function (start, value) {
+    if (bytes.length < start + value.length) return false;
+    for (let i = 0; i < value.length; i++) if (byte(start + i) !== value.charCodeAt(i)) return false;
+    return true;
+  };
+  if (mimeType === "image/jpeg") return byte(0) === 0xFF && byte(1) === 0xD8 && byte(2) === 0xFF;
+  if (mimeType === "image/png") return byte(0) === 0x89 && ascii(1, "PNG") && byte(4) === 0x0D && byte(5) === 0x0A && byte(6) === 0x1A && byte(7) === 0x0A;
+  if (mimeType === "image/webp") return ascii(0, "RIFF") && ascii(8, "WEBP");
+  if (mimeType === "image/gif") return ascii(0, "GIF87a") || ascii(0, "GIF89a");
+  if (mimeType === "video/mp4") return ascii(4, "ftyp");
+  if (mimeType === "video/webm") return byte(0) === 0x1A && byte(1) === 0x45 && byte(2) === 0xDF && byte(3) === 0xA3;
+  return false;
 }
