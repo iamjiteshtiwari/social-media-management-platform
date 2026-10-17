@@ -318,25 +318,42 @@ function replaceUserPostMedia_(userId, postId, mediaIds) {
       return { mediaId: mediaId, rowNumber: match.rowNumber };
     });
 
-    // The request is fully validated before existing links are removed.
+    // Add replacement links before removing old links. If a write fails,
+    // the old selection remains intact; best-effort rollback removes new links.
+    const now = new Date().toISOString();
+    const newLinkIds = [];
+    try {
+      validated.forEach(function (item, index) {
+        const newLinkId = Utilities.getUuid();
+        appendRecord_(links, {
+          post_media_id: newLinkId,
+          post_id: postKey,
+          media_id: item.mediaId,
+          sort_order: index + 1,
+          created_at: now
+        });
+        newLinkIds.push(newLinkId);
+        updateSheetRowFields_(library, item.rowNumber, {
+          last_referenced_at: now,
+          cleanup_eligible_at: ""
+        });
+      });
+    } catch (writeError) {
+      newLinkIds.reverse().forEach(function (linkId) {
+        try {
+          const addedMatch = findRecordByValue_(links, "post_media_id", linkId);
+          if (addedMatch) links.deleteRow(addedMatch.rowNumber);
+        } catch (rollbackError) {
+          // Keep the original error. Existing links are never removed here.
+        }
+      });
+      throw writeError;
+    }
+
+    // Remove old links only after all replacement links have been persisted.
     currentLinks.forEach(function (link) {
       const linkMatch = findRecordByValue_(links, "post_media_id", String(link.post_media_id || ""));
       if (linkMatch) links.deleteRow(linkMatch.rowNumber);
-    });
-
-    const now = new Date().toISOString();
-    validated.forEach(function (item, index) {
-      appendRecord_(links, {
-        post_media_id: Utilities.getUuid(),
-        post_id: postKey,
-        media_id: item.mediaId,
-        sort_order: index + 1,
-        created_at: now
-      });
-      updateSheetRowFields_(library, item.rowNumber, {
-        last_referenced_at: now,
-        cleanup_eligible_at: ""
-      });
     });
 
     // Mark removed media as cleanup-eligible only when no other post references it.
