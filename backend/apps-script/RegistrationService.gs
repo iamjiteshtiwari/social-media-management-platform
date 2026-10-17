@@ -59,7 +59,7 @@ function registerAccount_(input) {
       login_locked_until: "",
       created_at: now,
       updated_at: now
-    });;
+    });
 
     try {
       issueEmailVerificationOtp_(userId, data.email, data.fullName);
@@ -187,7 +187,7 @@ function resendRegistrationEmailOtp_(input) {
     if (!match) return { ok: true, code: "VERIFICATION_SENT" };
 
     const user = rowToRecord_(usersSheet, match);
-    if (user.status !== ACCOUNT_STATUS.PENDING_EMAIL) {
+    if (user.account_status !== ACCOUNT_STATUS.PENDING_EMAIL) {
       return { ok: true, code: "VERIFICATION_SENT" };
     }
 
