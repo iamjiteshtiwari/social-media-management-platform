@@ -1,5 +1,6 @@
 "use strict";
-document.addEventListener("DOMContentLoaded", () => {
+window.SMMPageInitializers = window.SMMPageInitializers || {};
+window.SMMPageInitializers.dashboard = function () {
   document.querySelectorAll("[data-current-year]").forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   const menuButton = document.querySelector(".menu-toggle");
   const nav = document.querySelector("#dashboard-navigation");
@@ -134,4 +135,5 @@ document.addEventListener("DOMContentLoaded", () => {
     if (empty) empty.hidden = true;
     announce("Media search and type filters have been reset. Sample items only.");
   });
-});
+};
+document.addEventListener("DOMContentLoaded", window.SMMPageInitializers.dashboard);
