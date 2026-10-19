@@ -55,6 +55,11 @@ function getMasterSchema_() {
       "challenge_id", "user_id", "challenge_type", "verifier_hash",
       "expires_at", "attempt_count", "max_attempts", "last_sent_at",
       "consumed_at", "created_at"
+    ],
+    OAuthStates: [
+      "oauth_state_id", "provider", "user_id", "session_id",
+      "state_verifier_hash", "created_at", "expires_at", "consumed_at",
+      "failure_reason"
     ]
   };
 }
