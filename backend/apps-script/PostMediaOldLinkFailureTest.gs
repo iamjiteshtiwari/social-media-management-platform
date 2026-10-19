@@ -202,3 +202,63 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
   Logger.log(JSON.stringify(report, null, 2));
   return report;
 }
+
+
+/**
+ * Removes only synthetic rows left by an earlier failed run of this test.
+ * Safe for the TEST workbook: matches this test's unique ID prefixes and
+ * the exact synthetic caption. Never accesses Drive.
+ */
+function cleanupFailedPostMediaOldLinkFailureTestArtifacts() {
+  const testSpreadsheetId = getRequiredPrivateProperty_(
+    AppConfig.PROPERTY.OPERATIONAL_TEST_SPREADSHEET_ID
+  );
+  const masterSpreadsheetId = getRequiredPrivateProperty_(
+    AppConfig.PROPERTY.MASTER_SPREADSHEET_ID
+  );
+  if (testSpreadsheetId === masterSpreadsheetId) {
+    throw new Error("OPERATIONAL_AND_MASTER_IDS_MUST_DIFFER");
+  }
+  const workbook = SpreadsheetApp.openById(testSpreadsheetId);
+  if (!/test/i.test(workbook.getName())) {
+    throw new Error("OPERATIONAL_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
+  }
+  const posts = getRequiredSheet_(workbook, "Posts");
+  const library = getRequiredSheet_(workbook, "MediaLibrary");
+  const links = getRequiredSheet_(workbook, "PostMedia");
+  const removed = { links: 0, media: 0, posts: 0 };
+  const failures = [];
+
+  [
+    { sheet: links, key: "post_media_id", prefixes: ["TEST_MEDIA_OLD_LINK_A_", "TEST_MEDIA_OLD_LINK_B_"], countKey: "links" },
+    { sheet: library, key: "media_id", prefixes: ["TEST_MEDIA_OLD_A_", "TEST_MEDIA_OLD_B_", "TEST_MEDIA_NEW_"], countKey: "media" },
+    { sheet: posts, key: "post_id", prefixes: ["TEST_MEDIA_OLD_LINK_FAILURE_POST_"], countKey: "posts" }
+  ].forEach(function (item) {
+    try {
+      const rows = readSheetRecords_(item.sheet);
+      const matches = [];
+      rows.forEach(function (record, index) {
+        const value = String(record[item.key] || "");
+        if (item.prefixes.some(function (prefix) { return value.indexOf(prefix) === 0; })) {
+          matches.push(index + 2);
+        }
+      });
+      matches.reverse().forEach(function (rowNumber) {
+        item.sheet.deleteRow(rowNumber);
+        removed[item.countKey]++;
+      });
+    } catch (error) {
+      failures.push("CLEANUP_FAILED:" + item.countKey);
+    }
+  });
+
+  const report = {
+    ok: failures.length === 0,
+    removed: removed,
+    failures: failures,
+    driveTouched: false
+  };
+  Logger.log("STALE OLD-LINK TEST ARTIFACT CLEANUP:");
+  Logger.log(JSON.stringify(report, null, 2));
+  return report;
+}
