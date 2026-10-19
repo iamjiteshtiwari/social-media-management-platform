@@ -489,6 +489,9 @@ function updateUserPost_(userId, postId, input) {
         throw new Error("INVALID_SCHEDULE_TIME");
       }
     }
+    if (fields.status === "cancelled") {
+      assertPostCanBeCancelled_(context.workbook, id);
+    }
     const updatedAt = new Date().toISOString();
     fields.updated_at = updatedAt;
     updateSheetRowFields_(posts, match.rowNumber, fields);
@@ -567,4 +570,29 @@ function cancelPostTargets_(workbook, postId, nowIso) {
     changed++;
   });
   return changed;
+}
+
+
+/**
+ * Reject cancellation while any target for this post is publishing.
+ * Caller must hold the ScriptLock.
+ */
+function assertPostCanBeCancelled_(workbook, postId) {
+  const id = String(postId || "").trim();
+  if (!id) throw new Error("POST_NOT_FOUND");
+
+  const targets = readSheetRecords_(
+    getRequiredSheet_(workbook, "PostTargets")
+  );
+
+  const hasPublishingTarget = targets.some(function (target) {
+    return String(target.post_id || "") === id &&
+      String(target.platform_status || "").trim().toLowerCase() === "publishing";
+  });
+
+  if (hasPublishingTarget) {
+    throw new Error("POST_PUBLISH_IN_PROGRESS");
+  }
+
+  return true;
 }
