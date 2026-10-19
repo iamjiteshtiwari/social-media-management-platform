@@ -28,7 +28,7 @@ function testPostAggregateStatusLifecycle() {
     { name: "allPublishedMarksParentPublished", initial: "scheduled", statuses: ["published", "published"], expected: "published" },
     { name: "terminalFailureMarksParentFailed", initial: "scheduled", statuses: ["published", "failed"], expected: "failed" },
     { name: "mixedPublishedAndCancelledMarksParentFailed", initial: "scheduled", statuses: ["published", "cancelled"], expected: "failed" },
-    { name: "allCancelledPreservesParentStatus", initial: "cancelled", statuses: ["cancelled", "cancelled"], expected: "cancelled" },
+    { name: "allCancelledPreservesParentStatus", initial: "scheduled", statuses: ["cancelled", "cancelled"], expected: "scheduled" },
     { name: "noTargetsLeavesParentUnchanged", initial: "draft", statuses: [], expected: "draft" }
   ];
   const postIds = cases.map(function () { return "TEST_POST_AGG_" + Utilities.getUuid(); });
