@@ -17,7 +17,17 @@ function testSessionLifecycleOnTestWorkbook() {
     throw new Error("MASTER_WORKBOOK_NAME_MUST_INCLUDE_TEST");
   }
 
-  assertMasterWorkbookSchema_(workbook);
+  const masterSchema = getMasterSchema_();
+  Object.keys(masterSchema).forEach(function (sheetName) {
+    const sheet = getRequiredSheet_(workbook, sheetName);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn())
+      .getDisplayValues()[0].map(function (header) { return String(header || "").trim(); });
+    if (!masterSchema[sheetName].every(function (header) {
+      return headers.indexOf(header) >= 0;
+    })) {
+      throw new Error("MASTER_SCHEMA_INVALID_" + sheetName);
+    }
+  });
 
   const users = getRequiredSheet_(workbook, "Users");
   const sessions = getRequiredSheet_(workbook, "Sessions");
