@@ -135,6 +135,23 @@ function recordPublishingOutcome_(workbook, targetId, outcome, nowIso) {
       throw writeError;
     }
 
+    // The target outcome is now durable. Recompute the parent from all targets.
+    // If this second write fails, report it without pretending the target write
+    // was rolled back; the aggregate helper is safe to rerun for reconciliation.
+    let parentStatus = "";
+    let parentStatusUpdated = false;
+    let parentStatusUpdateError = "";
+    try {
+      const aggregate = syncParentPostStatusFromTargets_(
+        workbook, String(target.post_id || ""), attemptedAt
+      );
+      parentStatus = aggregate.status;
+      parentStatusUpdated = aggregate.updated;
+    } catch (aggregateError) {
+      parentStatusUpdateError = String(aggregateError && aggregateError.message || "PARENT_STATUS_SYNC_FAILED")
+        .slice(0, 100);
+    }
+
     return {
       ok: true,
       log_id: logId,
@@ -142,7 +159,10 @@ function recordPublishingOutcome_(workbook, targetId, outcome, nowIso) {
       attempt_count: attemptCount,
       retry_count: retryCount,
       next_retry_at: nextRetryAt,
-      platform_status: nextStatus
+      platform_status: nextStatus,
+      parent_status: parentStatus,
+      parent_status_updated: parentStatusUpdated,
+      parent_status_update_error: parentStatusUpdateError
     };
   } finally {
     lock.releaseLock();
@@ -309,4 +329,69 @@ function testPublishingOutcomeLifecycle() {
     cleanupPassed: cleanupErrors.length === 0,
     cleanupErrors: cleanupErrors
   };
+}
+
+
+/**
+ * Recomputes a parent Posts.status from every PostTargets row for that post.
+ * Caller must hold the ScriptLock. Safe to rerun after a partial parent write.
+ *
+ * Rules:
+ * - preserve cancelled/deleted parent states;
+ * - no targets: leave parent unchanged;
+ * - any non-terminal target: scheduled (never use parent "publishing", because
+ *   the due queue intentionally excludes that parent status);
+ * - all targets published: published;
+ * - all targets terminal with a failure or mixed published/cancelled outcome: failed;
+ * - all targets cancelled: preserve the current parent state.
+ */
+function syncParentPostStatusFromTargets_(workbook, postId, nowIso) {
+  const id = String(postId || "").trim();
+  if (!workbook || !id) throw new Error("INVALID_POST_ID");
+
+  const posts = getRequiredSheet_(workbook, "Posts");
+  const postMatch = findRecordByValue_(posts, "post_id", id);
+  if (!postMatch) throw new Error("POST_NOT_FOUND");
+  const post = rowToRecord_(posts, postMatch);
+  const currentParentStatus = String(post.status || "draft").trim().toLowerCase();
+
+  if (["cancelled", "deleted"].indexOf(currentParentStatus) >= 0) {
+    return { updated: false, status: currentParentStatus, reason: "PARENT_TERMINAL" };
+  }
+
+  const targetRecords = readSheetRecords_(getRequiredSheet_(workbook, "PostTargets"))
+    .filter(function (target) { return String(target.post_id || "") === id; });
+  if (!targetRecords.length) {
+    return { updated: false, status: currentParentStatus, reason: "NO_TARGETS" };
+  }
+
+  const statuses = targetRecords.map(function (target) {
+    return String(target.platform_status || "").trim().toLowerCase();
+  });
+  const terminal = ["published", "failed", "cancelled"];
+  const allTerminal = statuses.every(function (status) { return terminal.indexOf(status) >= 0; });
+  let nextParentStatus;
+
+  if (!allTerminal) {
+    nextParentStatus = "scheduled";
+  } else if (statuses.every(function (status) { return status === "published"; })) {
+    nextParentStatus = "published";
+  } else if (statuses.every(function (status) { return status === "cancelled"; })) {
+    return { updated: false, status: currentParentStatus, reason: "ALL_TARGETS_CANCELLED" };
+  } else {
+    // Any terminal failure, or a mix of published and cancelled targets, means
+    // the requested post was not successfully delivered to every destination.
+    nextParentStatus = "failed";
+  }
+
+  if (nextParentStatus === currentParentStatus) {
+    return { updated: false, status: currentParentStatus, reason: "UNCHANGED" };
+  }
+
+  const timestamp = nowIso ? new Date(nowIso).toISOString() : new Date().toISOString();
+  updateSheetRowFields_(posts, postMatch.rowNumber, {
+    status: nextParentStatus,
+    updated_at: timestamp
+  });
+  return { updated: true, status: nextParentStatus, reason: "AGGREGATED" };
 }
