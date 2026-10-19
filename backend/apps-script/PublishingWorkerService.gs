@@ -202,3 +202,119 @@ function testPublishingBatchClaimCoordinator() {
   Logger.log(JSON.stringify(report, null, 2));
   return report;
 }
+
+
+/** TEST-only end-to-end claim -> retry -> claim -> success lifecycle. No provider calls. */
+function testPublishingClaimRetrySuccessOrchestration() {
+  const testId = getRequiredPrivateProperty_(AppConfig.PROPERTY.OPERATIONAL_TEST_SPREADSHEET_ID);
+  const masterId = getRequiredPrivateProperty_(AppConfig.PROPERTY.MASTER_SPREADSHEET_ID);
+  if (testId === masterId) throw new Error("OPERATIONAL_AND_MASTER_IDS_MUST_DIFFER");
+  const workbook = SpreadsheetApp.openById(testId);
+  if (!/test/i.test(workbook.getName())) throw new Error("OPERATIONAL_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
+  assertOperationalWorkbookSchema_(workbook);
+  const posts = getRequiredSheet_(workbook, "Posts");
+  const targets = getRequiredSheet_(workbook, "PostTargets");
+  const logs = getRequiredSheet_(workbook, "PublishingLogs");
+  const suffix = Utilities.getUuid();
+  const postId = "TEST_ORCH_POST_" + suffix;
+  const targetId = "TEST_ORCH_TARGET_" + suffix;
+  const t1 = Date.now();
+  const iso1 = new Date(t1).toISOString();
+  const due = new Date(t1 - 10 * 60 * 1000).toISOString();
+  const checks = {
+    firstClaim: false, claimDoesNotIncrementAttempt: false, retryScheduled: false,
+    retryClaim: false, successRecorded: false, attemptsAndLogsCorrect: false,
+    duplicateOutcomeRejected: false, duplicateDidNotChangeState: false
+  };
+  const cleanupErrors = [];
+  function get(sheet, key, value) {
+    const m = findRecordByValue_(sheet, key, value);
+    return m ? rowToRecord_(sheet, m) : null;
+  }
+  function ownLogs() {
+    return readSheetRecords_(logs).filter(function (row) { return String(row.target_id || "") === targetId; });
+  }
+  try {
+    appendRecord_(posts, {
+      post_id: postId, brand_id: "TEST_BRAND_ONLY", caption: "Synthetic orchestration test",
+      first_comment: "", content_type: "text", status: "scheduled", scheduled_at_utc: due,
+      timezone: "UTC", created_at: iso1, updated_at: iso1, deleted_at: ""
+    });
+    appendRecord_(targets, {
+      target_id: targetId, post_id: postId, social_connection_id: "TEST_CONNECTION_ONLY",
+      platform_status: "scheduled", scheduled_at_utc: due, published_at_utc: "",
+      platform_post_id: "", attempt_count: 0, next_retry_at: "", last_error_code: "", updated_at: iso1
+    });
+
+    const c1 = claimDuePublishingTarget_(workbook, targetId, iso1);
+    let target = get(targets, "target_id", targetId);
+    checks.firstClaim = c1.ok === true && String(target.platform_status) === "publishing";
+    checks.claimDoesNotIncrementAttempt = Number(target.attempt_count) === 0;
+
+    const o1 = recordPublishingOutcome_(workbook, targetId, {
+      success: false, retryable: true, error_code: "TEST_TRANSIENT", max_attempts: 3
+    }, iso1);
+    target = get(targets, "target_id", targetId);
+    checks.retryScheduled = o1.result_status === "retry_scheduled" &&
+      String(target.platform_status) === "pending" && Number(target.attempt_count) === 1 &&
+      String(target.last_error_code) === "TEST_TRANSIENT" &&
+      Date.parse(String(target.next_retry_at)) === t1 + PUBLISHING_RETRY_BASE_DELAY_MS &&
+      ownLogs().length === 1;
+
+    const retryTime = Date.parse(String(target.next_retry_at || ""));
+    if (!Number.isFinite(retryTime)) throw new Error("RETRY_TIMESTAMP_MISSING");
+    const t2 = retryTime + 1000;
+    const iso2 = new Date(t2).toISOString();
+    const c2 = claimDuePublishingTarget_(workbook, targetId, iso2);
+    target = get(targets, "target_id", targetId);
+    checks.retryClaim = c2.ok === true && String(target.platform_status) === "publishing" &&
+      Number(target.attempt_count) === 1;
+
+    const o2 = recordPublishingOutcome_(workbook, targetId, {
+      success: true, platform_post_id: "TEST_PLATFORM_POST_ONLY", max_attempts: 3
+    }, iso2);
+    target = get(targets, "target_id", targetId);
+    checks.successRecorded = o2.result_status === "success" &&
+      String(target.platform_status) === "published" &&
+      String(target.platform_post_id) === "TEST_PLATFORM_POST_ONLY" &&
+      String(target.published_at_utc) === iso2 && !String(target.next_retry_at || "") &&
+      ownLogs().length === 2;
+    const rows = ownLogs();
+    checks.attemptsAndLogsCorrect = Number(target.attempt_count) === 2 &&
+      rows.filter(function (row) { return row.result_status === "retry_scheduled"; }).length === 1 &&
+      rows.filter(function (row) { return row.result_status === "success"; }).length === 1;
+
+    let duplicateError = "";
+    try {
+      recordPublishingOutcome_(workbook, targetId, {
+        success: true, platform_post_id: "TEST_DUPLICATE_ONLY"
+      }, new Date(t2 + 1000).toISOString());
+    } catch (error) { duplicateError = String(error && error.message || error); }
+    checks.duplicateOutcomeRejected = duplicateError === "POST_TARGET_NOT_CLAIMED";
+    target = get(targets, "target_id", targetId);
+    checks.duplicateDidNotChangeState = ownLogs().length === 2 &&
+      String(target.platform_post_id) === "TEST_PLATFORM_POST_ONLY" && Number(target.attempt_count) === 2;
+  } catch (error) {
+    checks.failureCode = String(error && error.message || "TEST_FAILED").slice(0, 120);
+  } finally {
+    try {
+      let m = findRecordByValue_(logs, "target_id", targetId);
+      while (m) { logs.deleteRow(m.rowNumber); m = findRecordByValue_(logs, "target_id", targetId); }
+    } catch (error) { cleanupErrors.push("LOG_CLEANUP_FAILED"); }
+    try {
+      let m = findRecordByValue_(targets, "target_id", targetId);
+      while (m) { targets.deleteRow(m.rowNumber); m = findRecordByValue_(targets, "target_id", targetId); }
+    } catch (error) { cleanupErrors.push("TARGET_CLEANUP_FAILED"); }
+    try {
+      let m = findRecordByValue_(posts, "post_id", postId);
+      while (m) { posts.deleteRow(m.rowNumber); m = findRecordByValue_(posts, "post_id", postId); }
+    } catch (error) { cleanupErrors.push("POST_CLEANUP_FAILED"); }
+  }
+  const names = Object.keys(checks).filter(function (key) { return key !== "failureCode"; });
+  const passed = names.filter(function (key) { return checks[key] === true; }).length;
+  const result = { ok: passed === names.length && !checks.failureCode && cleanupErrors.length === 0,
+    passed: passed, total: names.length, checks: checks,
+    cleanupPassed: cleanupErrors.length === 0, cleanupErrors: cleanupErrors };
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
