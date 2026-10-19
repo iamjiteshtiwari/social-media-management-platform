@@ -376,10 +376,59 @@ function replaceUserPostMedia_(userId, postId, mediaIds) {
     }
 
     // Remove old links only after all replacement links have been persisted.
-    currentLinks.forEach(function (link) {
-      const linkMatch = findRecordByValue_(links, "post_media_id", String(link.post_media_id || ""));
-      if (linkMatch) links.deleteRow(linkMatch.rowNumber);
-    });
+    // If removal fails partway through, restore removed old links and roll back
+    // replacement links/metadata so the post returns to its prior media selection.
+    const removedOldLinks = [];
+    try {
+      currentLinks.forEach(function (link) {
+        const linkId = String(link.post_media_id || "");
+        const linkMatch = findRecordByValue_(links, "post_media_id", linkId);
+        if (linkMatch) {
+          const storedLink = rowToRecord_(links, linkMatch);
+          links.deleteRow(linkMatch.rowNumber);
+          removedOldLinks.push(storedLink);
+        }
+      });
+    } catch (removeError) {
+      let rollbackFailed = false;
+
+      removedOldLinks.forEach(function (link) {
+        try {
+          const existing = findRecordByValue_(links, "post_media_id", String(link.post_media_id || ""));
+          if (!existing) appendRecord_(links, link);
+        } catch (rollbackError) {
+          rollbackFailed = true;
+        }
+      });
+
+      newLinkIds.slice().reverse().forEach(function (linkId) {
+        try {
+          const addedMatch = findRecordByValue_(links, "post_media_id", linkId);
+          if (addedMatch) links.deleteRow(addedMatch.rowNumber);
+        } catch (rollbackError) {
+          rollbackFailed = true;
+        }
+      });
+
+      metadataUpdatesAttempted.slice().reverse().forEach(function (item) {
+        try {
+          const mediaMatch = findRecordByValue_(library, "media_id", item.mediaId);
+          if (!mediaMatch) {
+            rollbackFailed = true;
+            return;
+          }
+          updateSheetRowFields_(library, mediaMatch.rowNumber, {
+            last_referenced_at: item.originalLastReferencedAt,
+            cleanup_eligible_at: item.originalCleanupEligibleAt
+          });
+        } catch (rollbackError) {
+          rollbackFailed = true;
+        }
+      });
+
+      if (rollbackFailed) throw new Error("POST_MEDIA_REPLACEMENT_ROLLBACK_FAILED");
+      throw removeError;
+    }
 
     // Mark removed media as cleanup-eligible only when no other post references it.
     const remaining = readSheetRecords_(links);
