@@ -112,6 +112,8 @@ function testPostMediaReplacementMetadataRollback() {
       if (sheet.getName() === "MediaLibrary" &&
           Object.prototype.hasOwnProperty.call(fields || {}, "last_referenced_at")) {
         if (injected) {
+          // Inject only once so the service's rollback write can succeed.
+          injected = false;
           throw new Error("TEST_INJECTED_SECOND_MEDIA_METADATA_FAILURE");
         }
         originalUpdate(sheet, rowNumber, fields);
@@ -143,10 +145,10 @@ function testPostMediaReplacementMetadataRollback() {
     const newBMatch = findRecordByValue_(library, "media_id", newMediaBId);
     const newA = newAMatch ? rowToRecord_(library, newAMatch) : {};
     const newB = newBMatch ? rowToRecord_(library, newBMatch) : {};
-    checks.firstReplacementMetadataRemainsChanged =
+    checks.firstReplacementMetadataRestored =
       !!newAMatch &&
-      String(newA.last_referenced_at || "") !== originalMetadata.last_referenced_at &&
-      String(newA.cleanup_eligible_at || "") === "";
+      String(newA.last_referenced_at || "") === originalMetadata.last_referenced_at &&
+      String(newA.cleanup_eligible_at || "") === originalMetadata.cleanup_eligible_at;
     checks.secondReplacementMetadataUnchanged =
       !!newBMatch &&
       String(newB.last_referenced_at || "") === originalMetadata.last_referenced_at &&
@@ -198,9 +200,11 @@ function testPostMediaReplacementMetadataRollback() {
     passed: passed,
     total: Object.keys(checks).length,
     checks: checks,
-    reproductionConfirmed: checks.injectedFailureObserved &&
+    rollbackVerified: checks.injectedFailureObserved &&
+      checks.originalLinkPreserved &&
       checks.replacementLinksRolledBack &&
-      checks.firstReplacementMetadataRemainsChanged,
+      checks.firstReplacementMetadataRestored &&
+      checks.secondReplacementMetadataUnchanged,
     cleanupPassed: cleanupErrors.length === 0,
     cleanupErrors: cleanupErrors
   };
