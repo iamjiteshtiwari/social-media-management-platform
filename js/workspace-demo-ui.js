@@ -1,5 +1,6 @@
 "use strict";
-document.addEventListener("DOMContentLoaded", () => {
+window.SMMPageInitializers = window.SMMPageInitializers || {};
+window.SMMPageInitializers.workspaceDemo = function () {
   document.querySelectorAll("[data-current-year]").forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   const feedback = document.querySelector("#workspace-feedback");
   const announce = (message) => { if (feedback) feedback.textContent = message; };
@@ -106,4 +107,5 @@ document.addEventListener("DOMContentLoaded", () => {
     announce(name + " marked " + action + " in this local preview only. No real account was changed.");
   }));
   updateUnreadCount(); filterQueue(); filterNotifications(); filterApprovals();
-});
+};
+document.addEventListener("DOMContentLoaded", window.SMMPageInitializers.workspaceDemo);
