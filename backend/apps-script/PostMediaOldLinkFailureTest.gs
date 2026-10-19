@@ -38,10 +38,10 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
   const cleanupErrors = [];
   const checks = {
     injectedFailureObserved: false,
-    replacementLinkPersisted: false,
-    partialOldLinkRemovalObserved: false,
+    originalLinksRestored: false,
+    replacementLinkRolledBack: false,
     resolverRestored: false,
-    deleteMethodRestored: false
+    failureInjectorRestored: false
   };
 
   const originalResolver = getOperationalContextForUser_;
@@ -135,23 +135,22 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
     const postLinks = readSheetRecords_(links).filter(function (link) {
       return String(link.post_id || "") === postId;
     });
-    const oldLinksStillPresent = postLinks.filter(function (link) {
-      return String(link.post_media_id || "") === oldLinkAId ||
-        String(link.post_media_id || "") === oldLinkBId;
+    const oldLinkIds = postLinks.map(function (link) {
+      return String(link.post_media_id || "");
     });
-    checks.replacementLinkPersisted = postLinks.some(function (link) {
+    checks.originalLinksRestored =
+      postLinks.length === 2 &&
+      oldLinkIds.indexOf(oldLinkAId) >= 0 &&
+      oldLinkIds.indexOf(oldLinkBId) >= 0;
+    checks.replacementLinkRolledBack = !postLinks.some(function (link) {
       return String(link.media_id || "") === newMediaId;
     });
-    checks.partialOldLinkRemovalObserved =
-      oldDeleteAttempts === 2 &&
-      oldLinksStillPresent.length === 1 &&
-      postLinks.length === 2;
   } catch (error) {
     cleanupErrors.push("TEST_FAILED:" + String(error && error.message || "UNKNOWN").slice(0, 120));
   } finally {
     findRecordByValue_ = originalFindRecordByValue;
     getOperationalContextForUser_ = originalResolver;
-    checks.deleteMethodRestored = true;
+    checks.failureInjectorRestored = findRecordByValue_ === originalFindRecordByValue;
     checks.resolverRestored = getOperationalContextForUser_ === originalResolver;
 
     // Delete only synthetic spreadsheet rows; no Drive operations.
@@ -192,9 +191,9 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
     passed: passed,
     total: Object.keys(checks).length,
     checks: checks,
-    partialFailureReproduced: checks.injectedFailureObserved &&
-      checks.replacementLinkPersisted &&
-      checks.partialOldLinkRemovalObserved,
+    rollbackVerified: checks.injectedFailureObserved &&
+      checks.originalLinksRestored &&
+      checks.replacementLinkRolledBack,
     cleanupPassed: cleanupErrors.length === 0,
     cleanupErrors: cleanupErrors
   };
