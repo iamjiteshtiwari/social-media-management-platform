@@ -516,6 +516,9 @@ function deleteUserPost_(userId, postId) {
     if (post.deleted_at || ["published", "publishing"].indexOf(String(post.status || "").toLowerCase()) >= 0) {
       throw new Error("POST_NOT_DELETABLE");
     }
+    // Do not soft-delete the parent while any platform target is in-flight.
+    // Caller holds the ScriptLock, matching updateUserPost_ cancellation safety.
+    assertPostCanBeCancelled_(context.workbook, id);
     const now = new Date().toISOString();
     updateSheetRowFields_(posts, match.rowNumber, { status: "deleted", deleted_at: now, updated_at: now });
     cancelPostTargets_(context.workbook, id, now);
