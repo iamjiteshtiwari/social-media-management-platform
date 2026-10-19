@@ -315,13 +315,19 @@ function replaceUserPostMedia_(userId, postId, mediaIds) {
           String(media.retention_status || "").toLowerCase() === "protected") {
         throw new Error("MEDIA_NOT_AVAILABLE");
       }
-      return { mediaId: mediaId, rowNumber: match.rowNumber };
+      return {
+        mediaId: mediaId,
+        rowNumber: match.rowNumber,
+        originalLastReferencedAt: media.last_referenced_at || "",
+        originalCleanupEligibleAt: media.cleanup_eligible_at || ""
+      };
     });
 
     // Add replacement links before removing old links. If a write fails,
-    // the old selection remains intact; best-effort rollback removes new links.
+    // restore the old selection and metadata before returning the error.
     const now = new Date().toISOString();
     const newLinkIds = [];
+    const metadataUpdatesAttempted = [];
     try {
       validated.forEach(function (item, index) {
         const newLinkId = Utilities.getUuid();
@@ -333,20 +339,39 @@ function replaceUserPostMedia_(userId, postId, mediaIds) {
           created_at: now
         });
         newLinkIds.push(newLinkId);
+        // Record before writing because updateSheetRowFields_ may fail midway.
+        metadataUpdatesAttempted.push(item);
         updateSheetRowFields_(library, item.rowNumber, {
           last_referenced_at: now,
           cleanup_eligible_at: ""
         });
       });
     } catch (writeError) {
-      newLinkIds.reverse().forEach(function (linkId) {
+      let rollbackFailed = false;
+      newLinkIds.slice().reverse().forEach(function (linkId) {
         try {
           const addedMatch = findRecordByValue_(links, "post_media_id", linkId);
           if (addedMatch) links.deleteRow(addedMatch.rowNumber);
         } catch (rollbackError) {
-          // Keep the original error. Existing links are never removed here.
+          rollbackFailed = true;
         }
       });
+      metadataUpdatesAttempted.slice().reverse().forEach(function (item) {
+        try {
+          const mediaMatch = findRecordByValue_(library, "media_id", item.mediaId);
+          if (!mediaMatch) {
+            rollbackFailed = true;
+            return;
+          }
+          updateSheetRowFields_(library, mediaMatch.rowNumber, {
+            last_referenced_at: item.originalLastReferencedAt,
+            cleanup_eligible_at: item.originalCleanupEligibleAt
+          });
+        } catch (rollbackError) {
+          rollbackFailed = true;
+        }
+      });
+      if (rollbackFailed) throw new Error("POST_MEDIA_REPLACEMENT_ROLLBACK_FAILED");
       throw writeError;
     }
 
