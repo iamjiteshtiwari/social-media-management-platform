@@ -53,6 +53,7 @@ function testPostMediaReplacementMetadataRollback() {
   const originalResolver = getOperationalContextForUser_;
   const originalUpdate = updateSheetRowFields_;
   let injected = false;
+  let failureThrown = false;
 
   function appendSyntheticMedia(mediaId, driveFileId, metadata) {
     appendRecord_(library, {
@@ -111,9 +112,9 @@ function testPostMediaReplacementMetadataRollback() {
     updateSheetRowFields_ = function (sheet, rowNumber, fields) {
       if (sheet.getName() === "MediaLibrary" &&
           Object.prototype.hasOwnProperty.call(fields || {}, "last_referenced_at")) {
-        if (injected) {
-          // Inject only once so the service's rollback write can succeed.
-          injected = false;
+        if (injected && !failureThrown) {
+          // Inject only once so every rollback write can succeed.
+          failureThrown = true;
           throw new Error("TEST_INJECTED_SECOND_MEDIA_METADATA_FAILURE");
         }
         originalUpdate(sheet, rowNumber, fields);
