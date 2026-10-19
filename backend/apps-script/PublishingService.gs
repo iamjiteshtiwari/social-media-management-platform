@@ -191,6 +191,7 @@ function testPublishingOutcomeLifecycle() {
   }
   assertOperationalWorkbookSchema_(workbook);
 
+  const posts = getRequiredSheet_(workbook, "Posts");
   const targets = getRequiredSheet_(workbook, "PostTargets");
   const logs = getRequiredSheet_(workbook, "PublishingLogs");
   const retryTargetId = "TEST_TARGET_" + Utilities.getUuid();
@@ -222,6 +223,19 @@ function testPublishingOutcomeLifecycle() {
   }
 
   try {
+    appendRecord_(posts, {
+      post_id: testPostId,
+      brand_id: "TEST_BRAND_ONLY",
+      caption: "Synthetic publishing outcome lifecycle test",
+      first_comment: "",
+      content_type: "text",
+      status: "scheduled",
+      scheduled_at_utc: "",
+      timezone: "Asia/Kolkata",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted_at: ""
+    });
     appendSyntheticTarget(retryTargetId);
     appendSyntheticTarget(terminalTargetId);
 
@@ -317,6 +331,12 @@ function testPublishingOutcomeLifecycle() {
         cleanupErrors.push("TARGET_CLEANUP_FAILED");
       }
     });
+    try {
+      const postMatch = findRecordByValue_(posts, "post_id", testPostId);
+      if (postMatch) posts.deleteRow(postMatch.rowNumber);
+    } catch (error) {
+      cleanupErrors.push("POST_CLEANUP_FAILED");
+    }
   }
 
   const passed = Object.keys(checks).filter(function (key) { return checks[key]; }).length;
