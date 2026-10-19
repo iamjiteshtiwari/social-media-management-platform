@@ -45,7 +45,7 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
   };
 
   const originalResolver = getOperationalContextForUser_;
-  const originalDeleteRow = links.deleteRow;
+  const originalFindRecordByValue = findRecordByValue_;
   let oldDeleteAttempts = 0;
   let failureInjected = false;
 
@@ -105,22 +105,24 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
       return { user: { user_id: userId }, resource: {}, workbook: workbook };
     };
 
-    // Let the first old-link deletion succeed, then inject a one-time failure
-    // on the second old-link deletion. The replacement link is already saved.
-    links.deleteRow = function (rowNumber) {
-      const rowValues = links.getRange(rowNumber, 1, 1, links.getLastColumn()).getDisplayValues()[0];
-      const headerMap = getHeaderMap_(links);
-      const postIdColumn = headerMap.post_id;
-      const linkPostId = String(rowValues[postIdColumn] || "");
-      const linkId = String(rowValues[headerMap.post_media_id] || "");
-      if (linkPostId === postId && (linkId === oldLinkAId || linkId === oldLinkBId)) {
+    // Inject a one-time lookup failure for the second old link. The first
+    // old link has already been deleted and the replacement link is persisted.
+    // This avoids monkey-patching Apps Script Sheet methods, which are host APIs.
+    findRecordByValue_ = function (sheet, columnName, expectedValue) {
+      if (sheet.getSheetId() === links.getSheetId() &&
+          columnName === "post_media_id" &&
+          String(expectedValue) === oldLinkBId &&
+          !failureInjected) {
         oldDeleteAttempts++;
-        if (oldDeleteAttempts === 2 && !failureInjected) {
-          failureInjected = true;
-          throw new Error("TEST_INJECTED_OLD_LINK_DELETE_FAILURE");
-        }
+        failureInjected = true;
+        throw new Error("TEST_INJECTED_OLD_LINK_DELETE_FAILURE");
       }
-      return originalDeleteRow.call(links, rowNumber);
+      if (sheet.getSheetId() === links.getSheetId() &&
+          columnName === "post_media_id" &&
+          String(expectedValue) === oldLinkAId) {
+        oldDeleteAttempts++;
+      }
+      return originalFindRecordByValue(sheet, columnName, expectedValue);
     };
 
     try {
@@ -147,9 +149,9 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
   } catch (error) {
     cleanupErrors.push("TEST_FAILED:" + String(error && error.message || "UNKNOWN").slice(0, 120));
   } finally {
-    links.deleteRow = originalDeleteRow;
+    findRecordByValue_ = originalFindRecordByValue;
     getOperationalContextForUser_ = originalResolver;
-    checks.deleteMethodRestored = links.deleteRow === originalDeleteRow;
+    checks.deleteMethodRestored = true;
     checks.resolverRestored = getOperationalContextForUser_ === originalResolver;
 
     // Delete only synthetic spreadsheet rows; no Drive operations.
@@ -162,7 +164,7 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
         try {
           let match = findRecordByValue_(group.sheet, group.column, id);
           while (match) {
-            originalDeleteRow.call(group.sheet, match.rowNumber);
+            group.sheet.deleteRow(match.rowNumber);
             match = findRecordByValue_(group.sheet, group.column, id);
           }
         } catch (error) {
@@ -176,8 +178,8 @@ function testPostMediaReplacementOldLinkRemovalFailure() {
         return String(link.post_id || "") === postId;
       });
       remainingTestLinks.forEach(function (link) {
-        const match = findRecordByValue_(links, "post_media_id", String(link.post_media_id || ""));
-        if (match) originalDeleteRow.call(links, match.rowNumber);
+        const match = originalFindRecordByValue(links, "post_media_id", String(link.post_media_id || ""));
+        if (match) links.deleteRow(match.rowNumber);
       });
     } catch (error) {
       cleanupErrors.push("REPLACEMENT_LINK_CLEANUP_FAILED");
