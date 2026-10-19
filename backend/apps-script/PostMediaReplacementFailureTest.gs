@@ -44,7 +44,7 @@ function testPostMediaReplacementMetadataRollback() {
     injectedFailureObserved: false,
     originalLinkPreserved: false,
     replacementLinksRolledBack: false,
-    firstReplacementMetadataRemainsChanged: false,
+    firstReplacementMetadataRestored: false,
     secondReplacementMetadataUnchanged: false,
     helperRestored: false,
     resolverRestored: false
