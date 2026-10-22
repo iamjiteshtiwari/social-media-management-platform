@@ -82,7 +82,7 @@
       script.src = url.href;
       script.defer = true;
       script.onload = () => { loadedScripts.add(file); resolve(); };
-      script.onerror = () => resolve();
+      script.onerror = () => reject(new Error("Page script failed to load: " + url.href));
       document.head.appendChild(script);
     });
   }
