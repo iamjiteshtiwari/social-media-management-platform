@@ -77,7 +77,7 @@
     const url = new URL(src, location.href);
     const file = url.pathname.split("/").pop();
     if (loadedScripts.has(file)) return Promise.resolve();
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = url.href;
       script.defer = true;
