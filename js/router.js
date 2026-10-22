@@ -46,21 +46,31 @@
     }
   }
 
-  function ensureStylesheets(doc) {
-    const current = new Set([...document.querySelectorAll('link[rel="stylesheet"]')].map((link) => new URL(link.href, location.href).href));
-    return Promise.all([...doc.querySelectorAll('link[rel="stylesheet"][href]')].map((link) => {
+  async function ensureStylesheets(doc) {
+    const targetLinks = [...doc.querySelectorAll('link[rel="stylesheet"][href]')];
+    const targetHrefs = new Set(targetLinks.map((link) => new URL(link.getAttribute("href"), location.href).href));
+    const currentLinks = [...document.querySelectorAll('link[rel="stylesheet"][href]')];
+    const currentHrefs = new Set(currentLinks.map((link) => new URL(link.href, location.href).href));
+
+    await Promise.all(targetLinks.map((link) => {
       const href = new URL(link.getAttribute("href"), location.href).href;
-      if (current.has(href)) return Promise.resolve();
-      return new Promise((resolve) => {
+      if (currentHrefs.has(href)) return Promise.resolve();
+      return new Promise((resolve, reject) => {
         const next = document.createElement("link");
         next.rel = "stylesheet";
         next.href = href;
+        if (link.media) next.media = link.media;
         next.onload = resolve;
-        next.onerror = resolve;
+        next.onerror = () => reject(new Error("Stylesheet failed to load: " + href));
         document.head.appendChild(next);
-        current.add(href);
+        currentHrefs.add(href);
       });
     }));
+
+    // Remove page-specific styles only after the destination stylesheets are ready.
+    currentLinks.forEach((link) => {
+      if (!targetHrefs.has(new URL(link.href, location.href).href)) link.remove();
+    });
   }
 
   function ensureScript(src) {
