@@ -20,9 +20,8 @@ window.SMMPageInitializers.contentPlanner = function () {
     const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth()+1, 0).getDate();
     let dates = [];
     if (mode === "Week") {
-      const today = new Date();
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - ((today.getDay()+6)%7));
+      const monday = new Date(cursor);
+      monday.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7));
       dates = Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d;});
       monthHeading.textContent = "Week of " + new Intl.DateTimeFormat("en",{month:"short",day:"numeric",year:"numeric"}).format(monday);
     } else if (mode === "List") {
@@ -64,7 +63,7 @@ window.SMMPageInitializers.contentPlanner = function () {
     else cursor.setMonth(cursor.getMonth() + amount);
     render();
   }));
-  document.querySelector("[data-calendar-today]")?.addEventListener("click", () => { cursor = new Date(); cursor.setDate(1); render(); });
+  document.querySelector("[data-calendar-today]")?.addEventListener("click", () => { cursor = new Date(); if ((view?.value || "Month") !== "Week") cursor.setDate(1); render(); });
   view?.addEventListener("change", render);
   render();
 };
