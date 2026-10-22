@@ -40,3 +40,14 @@
 :root[data-theme="dark"] .media-attach-button > span:first-child { background: var(--color-page); }
 :root[data-theme="dark"] .social-preview { background: var(--color-surface); }
 :root[data-theme="dark"] .social-preview-media { background: linear-gradient(145deg, #142238, #1d3555); }
+
+
+/* Local media staging in the post editor; no backend upload is implied. */
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.selected-media-list{display:grid;gap:.65rem;margin-top:.75rem}
+.selected-media-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem;border:1px solid var(--border-color, #d8dee8);border-radius:.75rem;min-width:0}
+.selected-media-row__details{display:grid;gap:.2rem;min-width:0}
+.selected-media-row__details strong{overflow-wrap:anywhere}
+.selected-media-row__details small{color:var(--text-muted, #687386)}
+.selected-media-remove{flex-shrink:0;padding:.45rem .7rem}
+.social-preview-media__image{display:block;width:100%;max-height:320px;object-fit:contain;border-radius:.5rem}
