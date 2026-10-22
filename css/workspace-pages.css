@@ -181,3 +181,7 @@
 .brand-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
 .brand-form-grid__wide{grid-column:1/-1}
 @media(max-width:640px){.calendar-cell{min-height:86px;padding:.4rem}.calendar-cell__add{font-size:.68rem}.calendar-cell__empty{font-size:.65rem}.brand-form-grid{grid-template-columns:1fr}.brand-form-grid__wide{grid-column:auto}}
+
+
+.analytics-empty-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;text-align:center;padding:1.5rem;border:1px dashed var(--border-color,#d8dee8);border-radius:.8rem}
+.analytics-empty-state p{max-width:42rem;color:var(--text-muted,#687386);margin:0}
