@@ -14,7 +14,7 @@ window.SMMPageInitializers.postEditor = function () {
   const mediaButton = document.querySelector("[data-open-media-picker]");
   const scheduleInput = document.querySelector("#post-schedule");
   const requestedDate = new URLSearchParams(window.location.search).get("scheduledAt");
-  if (scheduleInput && requestedDate && /^\\d{4}-\\d{2}-\\d{2}$/.test(requestedDate)) {
+  if (scheduleInput && requestedDate && requestedDate.length === 10 && requestedDate[4] === "-" && requestedDate[7] === "-") {
     const date = new Date(requestedDate + "T09:00:00");
     if (!Number.isNaN(date.getTime())) {
       const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
