@@ -8,6 +8,11 @@ window.SMMPageInitializers.postEditor = function () {
   const platform = document.querySelector("#post-platform");
   const hashtags = document.querySelector("#post-hashtags");
   const feedback = document.querySelector(".post-form .form-feedback");
+  // Clear stale status from a previous visit when this page is re-initialized by SPA navigation.
+  if (feedback) {
+    feedback.textContent = "";
+    feedback.classList.remove("is-error");
+  }
   const render = () => {
     if (captionCount && caption) captionCount.textContent = String(caption.value.length);
     if (previewCaption && caption) previewCaption.textContent = caption.value.trim() || "Your post caption will appear here as you write.";
