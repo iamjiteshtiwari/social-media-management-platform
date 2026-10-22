@@ -157,3 +157,10 @@
 :root[data-theme="dark"] .status-pill--green { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .status-pill--red { border-color: #71383c; background: #3a2027; color: #ffb4bd; }
 :root[data-theme="dark"] .status-pill--blue { border-color: #29496f; background: #142a45; color: #c9defb; }
+
+
+/* Local-only media staging cards. */
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.media-library-item[data-staged-media="true"]{gap:.65rem}
+.media-library-item[data-staged-media="true"] .button-secondary{align-self:start;padding:.4rem .65rem}
+.media-library-item[data-staged-media="true"] .media-file-preview{overflow:hidden}
