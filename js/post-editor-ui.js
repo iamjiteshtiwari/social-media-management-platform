@@ -12,6 +12,15 @@ window.SMMPageInitializers.postEditor = function () {
   const mediaSelection = document.querySelector("#post-media-selection");
   const mediaPreview = document.querySelector(".social-preview-media");
   const mediaButton = document.querySelector("[data-open-media-picker]");
+  const scheduleInput = document.querySelector("#post-schedule");
+  const requestedDate = new URLSearchParams(window.location.search).get("scheduledAt");
+  if (scheduleInput && requestedDate && /^\\d{4}-\\d{2}-\\d{2}$/.test(requestedDate)) {
+    const date = new Date(requestedDate + "T09:00:00");
+    if (!Number.isNaN(date.getTime())) {
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      scheduleInput.value = local.toISOString().slice(0, 16);
+    }
+  }
   let selectedFiles = [];
   if (feedback) {
     feedback.textContent = "";
