@@ -109,7 +109,7 @@ function deleteUserMedia_(userId, mediaId) {
       throw new Error("MEDIA_PROTECTED");
     }
     const fileId = String(media.drive_file_id || "");
-    const file = DriveApp.getFileById(fileId);
+    const file = getMediaDriveFile_(fileId);
     const parents = file.getParents();
     let inFolder = false;
     while (parents.hasNext()) {
@@ -134,6 +134,11 @@ function deleteUserMedia_(userId, mediaId) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Internal seam so TEST-only failure tests can substitute a synthetic Drive file. */
+function getMediaDriveFile_(fileId) {
+  return DriveApp.getFileById(fileId);
 }
 
 function isAllowedMediaSignature_(bytes, mimeType) {
