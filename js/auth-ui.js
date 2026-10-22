@@ -13,64 +13,114 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  document.querySelectorAll("[data-demo-link]").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      const feedback = link.closest(".auth-card")?.querySelector(".form-feedback");
-      if (feedback) feedback.textContent = "Password recovery preview: no email is sent and no account is checked.";
-    });
-  });
-
-  document.querySelectorAll("[data-demo-resend]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const feedback = button.closest(".auth-card")?.querySelector(".form-feedback");
-      if (feedback) {
-        feedback.textContent = "Preview only: a new code cannot be sent until email integration is connected.";
-        feedback.classList.remove("is-error");
+  const setFeedback = (form, message, isError = false) => {
+    const feedback = form?.querySelector(".form-feedback");
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.classList.toggle("is-error", isError);
+    feedback.setAttribute("role", isError ? "alert" : "status");
+  };
+  const captchaTokenFor = (form) => {
+    const widget = form.querySelector("[data-captcha-purpose]");
+    if (!widget) return "";
+    const response = form.querySelector('[name="g-recaptcha-response"]');
+    return response && response.value ? response.value : "";
+  };
+  const fieldsToPayload = (form) => {
+    const payload = {};
+    new FormData(form).forEach((value, key) => {
+      if (key !== "confirm_password" && key !== "terms" && key !== "remember" && key !== "g-recaptcha-response") {
+        payload[key] = String(value).trim();
       }
     });
-  });
+    const password = form.querySelector('[name="password"]');
+    if (password) payload.password = password.value;
+    const captchaToken = captchaTokenFor(form);
+    if (captchaToken) payload.captchaToken = captchaToken;
+    return payload;
+  };
 
-  document.querySelectorAll("[data-demo-form]").forEach((form) => {
-    form.addEventListener("submit", (event) => {
+  document.querySelectorAll("[data-auth-action]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (!form.reportValidity()) return;
+      const action = form.dataset.authAction;
       const feedback = form.querySelector(".form-feedback");
-      if (!feedback) return;
-      feedback.classList.remove("is-error");
-      const otp = form.querySelector('[name="otp"]');
-      if (otp && !/^[0-9]{6}$/.test(otp.value)) {
-        feedback.textContent = "Enter the 6-digit code format to preview this step.";
-        feedback.classList.add("is-error");
-        otp.focus();
-        return;
-      }
+      const submit = form.querySelector('button[type="submit"]');
       const password = form.querySelector('[name="password"]');
       const confirm = form.querySelector('[name="confirm_password"]');
       if (password && confirm && password.value !== confirm.value) {
-        feedback.textContent = "The passwords do not match. Please check both fields.";
-        feedback.classList.add("is-error");
+        setFeedback(form, "The passwords do not match. Please check both fields.", true);
         confirm.focus();
         return;
       }
-      const captcha = form.querySelector("[data-captcha-purpose]");
-      const captchaResponse = form.querySelector('[name="g-recaptcha-response"]');
-      if (captcha && (!captchaResponse || !captchaResponse.value)) {
-        feedback.textContent = "Complete the CAPTCHA to continue this preview. Server-side verification is not connected, and no information will be sent or saved.";
-        feedback.classList.add("is-error");
+      if (form.querySelector("[data-captcha-purpose]") && !captchaTokenFor(form)) {
+        setFeedback(form, "Complete the security verification to continue.", true);
         return;
       }
-      if (otp) {
-        feedback.textContent = "Design preview only: this code was not verified and no account status was changed.";
-      } else if (confirm) {
-        feedback.textContent = captcha
-          ? "Preview only: CAPTCHA was completed in the browser but not verified by the server. No account was created and no information was sent or saved."
-          : "Design preview only: no account was created and no information was sent or saved.";
-      } else if (form.querySelector("#recovery-email")) {
-        feedback.textContent = "Design preview only: no recovery email was sent and no account was checked.";
-      } else {
-        feedback.textContent = "Design preview only: sign-in is not connected yet. No information was sent or saved.";
+      if (!window.SMMApi || typeof window.SMMApi.request !== "function") {
+        setFeedback(form, "The account service is not configured. Your information has not been sent.", true);
+        return;
+      }
+      if (submit) {
+        submit.disabled = true;
+        submit.setAttribute("aria-busy", "true");
+        submit.dataset.originalLabel = submit.textContent;
+      }
+      if (feedback) feedback.textContent = "Connecting securely…";
+      try {
+        const result = await window.SMMApi.request(action, fieldsToPayload(form));
+        if (result && result.ok) {
+          setFeedback(form, result.message || "Request completed.");
+          if (action === "register") {
+            const email = form.querySelector('[name="email"]')?.value || "";
+            window.location.assign("verify-email.html" + (email ? "?email=" + encodeURIComponent(email) : ""));
+          } else if (action === "verifyEmail") {
+            window.location.assign("approval-pending.html");
+          } else if (action === "login") {
+            window.location.assign("dashboard.html");
+          } else if (action === "requestPasswordReset") {
+            setFeedback(form, result.message || "If the account is eligible, recovery instructions will be sent.");
+          }
+        } else {
+          setFeedback(form, result?.message || "The request could not be completed. Please try again.", true);
+        }
+      } catch (_) {
+        setFeedback(form, "The request could not be completed. Please try again later.", true);
+      } finally {
+        if (submit) {
+          submit.disabled = false;
+          submit.removeAttribute("aria-busy");
+        }
+        const captcha = form.querySelector("[data-captcha-purpose]");
+        if (captcha && window.grecaptcha && typeof window.grecaptcha.reset === "function") {
+          try { window.grecaptcha.reset(); } catch (_) {}
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-auth-resend]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const form = button.closest(".auth-card")?.querySelector("[data-auth-action]");
+      if (!form) return;
+      const email = form.querySelector('[name="email"]')?.value?.trim();
+      if (!email) {
+        setFeedback(form, "Enter the email address for this account first.", true);
+        form.querySelector('[name="email"]')?.focus();
+        return;
+      }
+      if (!window.SMMApi) {
+        setFeedback(form, "The account service is not configured. No code was requested.", true);
+        return;
+      }
+      button.disabled = true;
+      try {
+        const result = await window.SMMApi.request("resendEmailCode", { email, captchaToken: captchaTokenFor(form) });
+        setFeedback(form, result.message || (result.ok ? "A new verification code was requested." : "A new code could not be requested."), !result.ok);
+      } finally {
+        button.disabled = false;
       }
     });
   });
 });
-
