@@ -1,8 +1,19 @@
 "use strict";
-document.addEventListener("DOMContentLoaded", () => {
+window.SMMPageInitializers = window.SMMPageInitializers || {};
+window.SMMPageInitializers.dashboard = function () {
   document.querySelectorAll("[data-current-year]").forEach((node) => { node.textContent = String(new Date().getFullYear()); });
   const menuButton = document.querySelector(".menu-toggle");
   const nav = document.querySelector("#dashboard-navigation");
+  const closeCurrentMenu = (restoreFocus = false) => {
+    const currentButton = document.querySelector(".menu-toggle");
+    const currentNav = document.querySelector("#dashboard-navigation");
+    if (!currentButton || !currentNav) return;
+    currentButton.setAttribute("aria-expanded", "false");
+    currentButton.setAttribute("aria-label", "Open workspace menu");
+    currentNav.classList.remove("is-open");
+    if (restoreFocus) currentButton.focus();
+  };
+
   if (menuButton && nav) {
     menuButton.addEventListener("click", () => {
       const open = menuButton.getAttribute("aria-expanded") === "true";
@@ -10,22 +21,25 @@ document.addEventListener("DOMContentLoaded", () => {
       menuButton.setAttribute("aria-label", open ? "Open workspace menu" : "Close workspace menu");
       nav.classList.toggle("is-open", !open);
     });
-    const closeMenu = (restoreFocus = false) => {
-      menuButton.setAttribute("aria-expanded", "false");
-      menuButton.setAttribute("aria-label", "Open workspace menu");
-      nav.classList.remove("is-open");
-      if (restoreFocus) menuButton.focus();
-    };
-    nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => closeMenu()));
+    nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => closeCurrentMenu()));
+  }
+
+  // Bind global menu listeners once; resolve current DOM nodes at event time.
+  if (!window.__smmDashboardMenuListeners) {
     document.addEventListener("click", (event) => {
-      if (nav.classList.contains("is-open") && !nav.contains(event.target) && !menuButton.contains(event.target)) closeMenu();
+      const currentButton = document.querySelector(".menu-toggle");
+      const currentNav = document.querySelector("#dashboard-navigation");
+      if (currentButton && currentNav && currentNav.classList.contains("is-open") &&
+          !currentNav.contains(event.target) && !currentButton.contains(event.target)) closeCurrentMenu();
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && nav.classList.contains("is-open")) closeMenu(true);
+      const currentNav = document.querySelector("#dashboard-navigation");
+      if (event.key === "Escape" && currentNav && currentNav.classList.contains("is-open")) closeCurrentMenu(true);
     });
     window.addEventListener("resize", () => {
-      if (window.matchMedia("(min-width: 761px)").matches) closeMenu();
+      if (window.matchMedia("(min-width: 761px)").matches) closeCurrentMenu();
     });
+    window.__smmDashboardMenuListeners = true;
   }
 
   const announce = (message) => {
@@ -134,4 +148,5 @@ document.addEventListener("DOMContentLoaded", () => {
     if (empty) empty.hidden = true;
     announce("Media search and type filters have been reset. Sample items only.");
   });
-});
+};
+document.addEventListener("DOMContentLoaded", window.SMMPageInitializers.dashboard);

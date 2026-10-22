@@ -1,5 +1,6 @@
 "use strict";
-document.addEventListener("DOMContentLoaded", () => {
+window.SMMPageInitializers = window.SMMPageInitializers || {};
+window.SMMPageInitializers.postEditor = function () {
   const caption = document.querySelector("#post-caption");
   const captionCount = document.querySelector("#caption-count");
   const previewCaption = document.querySelector("#preview-caption");
@@ -58,4 +59,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     render();
   });
-});
+};
+document.addEventListener("DOMContentLoaded", window.SMMPageInitializers.postEditor);
