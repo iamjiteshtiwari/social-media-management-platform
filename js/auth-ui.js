@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         submit.setAttribute("aria-busy", "true");
         submit.dataset.originalLabel = submit.textContent;
       }
-      if (feedback) feedback.textContent = "Connecting securely…";
+      if (feedback) feedback.textContent = "Checking account service availability…";
       try {
         const result = await window.SMMApi.request(action, fieldsToPayload(form));
         if (result && result.ok) {
@@ -118,6 +118,8 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const result = await window.SMMApi.request("resendEmailCode", { email, captchaToken: captchaTokenFor(form) });
         setFeedback(form, result.message || (result.ok ? "A new verification code was requested." : "A new code could not be requested."), !result.ok);
+      } catch (_) {
+        setFeedback(form, "The verification code request could not be completed. Please try again later.", true);
       } finally {
         button.disabled = false;
       }
