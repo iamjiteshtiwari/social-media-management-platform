@@ -157,3 +157,31 @@
 :root[data-theme="dark"] .status-pill--green { border-color: #245a43; background: #143628; color: #8de0b5; }
 :root[data-theme="dark"] .status-pill--red { border-color: #71383c; background: #3a2027; color: #ffb4bd; }
 :root[data-theme="dark"] .status-pill--blue { border-color: #29496f; background: #142a45; color: #c9defb; }
+
+
+/* Local-only media staging cards. */
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.media-library-item[data-staged-media="true"]{gap:.65rem}
+.media-library-item[data-staged-media="true"] .button-secondary{align-self:start;padding:.4rem .65rem}
+.media-library-item[data-staged-media="true"] .media-file-preview{overflow:hidden}
+
+
+/* Calendar interaction and brand form foundations. */
+.calendar-cell{min-width:0;min-height:112px;padding:.65rem;border:1px solid var(--border-color,#d8dee8);border-radius:.65rem;display:flex;flex-direction:column;gap:.5rem}
+.calendar-cell__head{display:flex;align-items:center;justify-content:space-between;gap:.35rem}
+.calendar-cell__add{font-size:.75rem;text-decoration:none;white-space:nowrap}
+.calendar-cell__empty{font-size:.75rem;color:var(--text-muted,#687386);margin:auto 0}
+.calendar-cell.is-outside-month{opacity:.55}
+.calendar-cell.is-today{outline:2px solid var(--accent-color,#2563eb);outline-offset:-2px}
+.calendar-grid--list .calendar-cells{display:flex;flex-direction:column;gap:.4rem}
+.calendar-grid--list .calendar-cell{min-height:58px;flex-direction:row;align-items:center;justify-content:space-between}
+.calendar-grid--list .calendar-cell__empty{margin:0}
+.calendar-grid--week .calendar-cells{grid-template-columns:repeat(7,minmax(0,1fr))}
+.brand-create-form{padding:1.25rem}
+.brand-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.brand-form-grid__wide{grid-column:1/-1}
+@media(max-width:640px){.calendar-cell{min-height:86px;padding:.4rem}.calendar-cell__add{font-size:.68rem}.calendar-cell__empty{font-size:.65rem}.brand-form-grid{grid-template-columns:1fr}.brand-form-grid__wide{grid-column:auto}}
+
+
+.analytics-empty-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;text-align:center;padding:1.5rem;border:1px dashed var(--border-color,#d8dee8);border-radius:.8rem}
+.analytics-empty-state p{max-width:42rem;color:var(--text-muted,#687386);margin:0}
