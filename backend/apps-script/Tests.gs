@@ -17,7 +17,8 @@ function runBackendSelfTests() {
     const schema = getMasterSchema_();
     const expected = [
       "Users", "UserResources", "SocialConnections", "AppConfig",
-      "AuthRecords", "AuditLogs", "Sessions", "AuthChallenges"
+      "AuthRecords", "AuditLogs", "Sessions", "AuthChallenges",
+      "OAuthStates"
     ];
     return expected.length === Object.keys(schema).length &&
       expected.every(function (name) {
