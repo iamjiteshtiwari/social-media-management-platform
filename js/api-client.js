@@ -16,6 +16,12 @@
   }[code] || "The request could not be completed. Please try again later.");
 
   async function request(action, payload = {}) {
+    // Fail closed until secure browser session transport and authorization are approved.
+    // Health is non-sensitive; all account and workspace actions remain blocked.
+    if (action !== "health") {
+      return { ok: false, code: "AUTH_TRANSPORT_NOT_CONFIGURED", message: safeMessage("AUTH_TRANSPORT_NOT_CONFIGURED") };
+    }
+
     const endpoint = String(config().apiUrl || "").trim();
     if (!endpoint) {
       return { ok: false, code: "API_NOT_CONFIGURED", message: safeMessage("API_NOT_CONFIGURED") };
