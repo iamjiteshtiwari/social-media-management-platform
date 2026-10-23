@@ -1,6 +1,6 @@
 # Frontend–Backend Integration Contract (Checkpoint)
 
-Status date: 2026-10-22  
+Status date: 2026-10-23  
 Scope: frontend integration planning only. This document does not enable or change backend routes.
 
 ## Safety rules
@@ -11,6 +11,14 @@ Scope: frontend integration planning only. This document does not enable or chan
 - Do not invent action names or call service functions that are not routed through the approved API.
 - Admin actions must require server-side admin authorization. Hiding buttons in the frontend is not authorization.
 - Main portfolio repository/site, Apps Script source, Google Sheets/Drive, script properties, OAuth/provider settings, DNS and Pages configuration are outside this frontend PR.
+
+## Latest source checkpoint (2026-10-23)
+
+- `js/api-client.js` now returns `AUTH_TRANSPORT_NOT_CONFIGURED` for every action except `health`, before reading the endpoint or sending a request. This is a fail-closed client-side guard, not a replacement for server-side authorization.
+- `js/auth-ui.js` uses neutral account-service availability wording rather than claiming that a secure connection has been established. Its resend-code handler also shows a fallback error if an unexpected exception occurs.
+- These changes are on `frontend/app-shell-backend-ready` only. They have not been merged or deployed.
+- Source verification confirmed the guard exists. Runtime/browser tests, Apps Script transport checks, and end-to-end authentication tests have not been performed.
+- The API URL remains unset. No account data has been sent by this work.
 
 ## Confirmed account API action names
 
