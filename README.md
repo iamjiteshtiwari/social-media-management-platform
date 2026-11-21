@@ -9,7 +9,7 @@ The product goal is to manage brands and social accounts, prepare content, organ
 - **Default/live branch:** `JTCodes`. It serves the current GitHub Pages frontend. Do not use it for unreviewed work.
 - **Frontend integration branch:** `frontend/app-shell-backend-ready`. Isolated frontend improvements and backend-ready UI work; not merged or deployed. API client fails closed for all non-health actions.
 - **Backend development branch:** `s4-backend-foundation`. Backend foundation and modular Apps Script source.
-- **Backend reconciliation branch:** `reconcile/latest-test-export-2026-11-21`. Contains the latest TEST-export reconciliation. It is 29 commits ahead of `s4-backend-foundation`, 0 behind, and is the source branch of draft PR #4. It is not merged.
+- **Backend reconciliation branch:** `reconcile/latest-test-export-2026-11-21`. Contains the latest TEST-export reconciliation. It is ahead of `s4-backend-foundation` and not behind it, and is the source branch of draft PR #4. It is not merged.
 - **Draft PR #4:** [Reconcile Apps Script backend with latest TEST export](https://github.com/iamjiteshtiwari/social-media-management-platform/pull/4). Review target is `s4-backend-foundation`; keep draft/unmerged until manual TEST verification and review are complete.
 - **Historical branches:** `spa-navigation-poc` was merged into `JTCodes` (merge commit `7c9f5fe`) and is 3 commits behind; `fix/post-editor-media-feedback` is 1 commit behind; `test/media-delete-drive-trash-failure` is a one-commit test-only branch based on the backend line and is superseded by the corrected test in PR #4. Preserve these branches as history; do not continue work on them.
 - **Repository branch policy and exact links:** [docs/BRANCH-STRATEGY.md](docs/BRANCH-STRATEGY.md).
