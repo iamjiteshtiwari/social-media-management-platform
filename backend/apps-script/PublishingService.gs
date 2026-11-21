@@ -339,8 +339,9 @@ function testPublishingOutcomeLifecycle() {
     }
   }
 
+
   const passed = Object.keys(checks).filter(function (key) { return checks[key]; }).length;
-  return {
+  const result = {
     ok: passed === Object.keys(checks).length && !failureCode && cleanupErrors.length === 0,
     passed: passed,
     total: Object.keys(checks).length,
@@ -349,6 +350,10 @@ function testPublishingOutcomeLifecycle() {
     cleanupPassed: cleanupErrors.length === 0,
     cleanupErrors: cleanupErrors
   };
+
+  console.log(JSON.stringify(result, null, 2));
+  return result;
+
 }
 
 
