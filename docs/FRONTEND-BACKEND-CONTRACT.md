@@ -1,6 +1,6 @@
 # Frontend–Backend Integration Contract (Checkpoint)
 
-Status date: 2026-10-23  
+Status date: 2026-11-21  
 Scope: frontend integration planning only. This document does not enable or change backend routes.
 
 ## Safety rules
@@ -44,7 +44,7 @@ The API client currently sends a JSON body using POST and `Content-Type: text/pl
 | Social accounts | `SocialConnections`, `OAuthStates` | Provider options only; no connection action | OAuth initiation/callback, state/CSRF checks, encrypted token storage/refresh and connection status API |
 | Content planner | `Posts`, `PostTargets` | Calendar navigation only; no posts loaded | Authenticated post list by date range, pagination/filter contract, timezone rules |
 | Post editor | `Posts`, `PostTargets`, `PostMedia`, `MediaLibrary` | Form preview and local file selection only | Draft create/update, target selection, media upload, validation, scheduling contract and idempotency behavior |
-| Media library | `MediaLibrary`, Drive media objects | Files staged in browser only | Authenticated upload/list/delete routes, size/type limits, ownership checks, Drive rollback and orphan cleanup behavior |
+| Media library | `MediaLibrary`, Drive media objects | Files staged in browser only | Authenticated upload/list/delete routes, ownership checks, Drive rollback and orphan cleanup behavior. Current backend source accepts JPEG, PNG, WebP, GIF, MP4 and WebM up to 8 MB per file; PDF and other MIME types are not supported. |
 | Publishing queue | `Posts`, `PostTargets`, `PublishingLogs` | Empty state; no sample records | Authorized queue/status read and approved cancellation/retry/delete semantics; do not equate queued with published |
 | Analytics | Publishing/performance records | Empty state; export disabled | Real metric sources, provider availability, time-window/timezone definitions, pagination and export contract |
 | Notifications | Notification source/service not yet confirmed | Empty state; read controls disabled | Confirm canonical storage/schema, authenticated list/read APIs, unread-count semantics |
