@@ -1,16 +1,19 @@
 /**
  * Versioned canonical data contracts.
  *
- * Master workbook: account registry, resource map, social connections,
- * non-secret configuration, authentication records, audit trail and the
- * supporting session/challenge records required by custom authentication.
+ * Master workbook: account registry, resource mapping, social connections,
+ * non-secret configuration, authentication records, audit trail, sessions,
+ * authentication challenges, and OAuth state records.
  * Per-user workbook: the seven approved operational tabs.
  *
  * These definitions do not create or modify spreadsheets by themselves.
  * Initializers remain manual-only and guarded by private opt-in properties.
- * Never store plaintext passwords, raw session tokens, OTP values, OAuth
- * tokens, CAPTCHA secrets or provider refresh tokens in spreadsheet cells.
+ *
+ * Never store plaintext passwords, raw session tokens, OTP values, raw OAuth
+ * state values, OAuth tokens, CAPTCHA secrets, or provider refresh tokens
+ * in spreadsheet cells.
  */
+
 const MASTER_SCHEMA_VERSION = 2;
 
 function getMasterSchema_() {
@@ -99,11 +102,14 @@ function getOperationalSchema_() {
 }
 
 function getSchemaPreview() {
-  return {
+  const preview = {
     version: MASTER_SCHEMA_VERSION,
     master: getMasterSchema_(),
     operational: getOperationalSchema_()
   };
+
+  console.log(JSON.stringify(preview, null, 2));
+  return preview;
 }
 
 /**
@@ -148,11 +154,21 @@ function initializeMasterSchema() {
     if (!matches) throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
   });
 
-  return {
-    ok: true,
-    version: MASTER_SCHEMA_VERSION,
-    sheets: Object.keys(schema)
-  };
+  const result = {
+  ok: true,
+  version: MASTER_SCHEMA_VERSION,
+  spreadsheetName: spreadsheet.getName(),
+  spreadsheetId: spreadsheet.getId(),
+  sheets: Object.keys(schema),
+  sheetCount: Object.keys(schema).length,
+  oauthStatesIncluded: Object.prototype.hasOwnProperty.call(
+    schema,
+    "OAuthStates"
+  )
+};
+
+console.log(JSON.stringify(result, null, 2));
+return result;
 }
 
 /**
@@ -192,4 +208,80 @@ function validateSchemaCompatibility_(spreadsheet, schema) {
     });
     if (!matches) throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
   });
+}
+
+
+function initializeOperationalSchema() {
+  if (
+    getPrivateProperty_(
+      AppConfig.PROPERTY.ENABLE_OPERATIONAL_SCHEMA_INITIALIZATION
+    ) !== "YES"
+  ) {
+    throw new Error("OPERATIONAL_SCHEMA_INITIALIZATION_NOT_ENABLED");
+  }
+
+  const spreadsheetId = getRequiredPrivateProperty_(
+    AppConfig.PROPERTY.OPERATIONAL_TEST_SPREADSHEET_ID
+  );
+
+  const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+
+  if (!/test/i.test(spreadsheet.getName())) {
+    throw new Error("OPERATIONAL_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
+  }
+
+  validateNoLegacySchemaTabs_(spreadsheet, [
+    "ResourceMap",
+    "AuditLog",
+    "SocialAccounts",
+    "Content",
+    "PublishingQueue",
+    "Notifications"
+  ]);
+
+  const schema = getOperationalSchema_();
+
+  validateSchemaCompatibility_(spreadsheet, schema);
+
+  Object.keys(schema).forEach(function (sheetName) {
+    const headers = schema[sheetName];
+    let sheet = spreadsheet.getSheetByName(sheetName);
+
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(sheetName);
+    }
+
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.setFrozenRows(1);
+      return;
+    }
+
+    const existing = sheet.getRange(
+      1,
+      1,
+      1,
+      Math.max(sheet.getLastColumn(), headers.length)
+    ).getDisplayValues()[0].slice(0, headers.length);
+
+    const matches = headers.every(function (header, index) {
+      return existing[index] === header;
+    });
+
+    if (!matches) {
+      throw new Error("SCHEMA_HEADER_MISMATCH:" + sheetName);
+    }
+  });
+
+  const result = {
+    ok: true,
+    schemaType: "operational",
+    version: MASTER_SCHEMA_VERSION,
+    spreadsheetName: spreadsheet.getName(),
+    sheets: Object.keys(schema),
+    sheetCount: Object.keys(schema).length
+  };
+
+  console.log(JSON.stringify(result, null, 2));
+  return result;
 }
