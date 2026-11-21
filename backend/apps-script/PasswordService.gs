@@ -45,7 +45,9 @@ function pbkdf2Sha256_(password, salt, iterations, keyLength) {
 
   for (let round = 1; round < iterations; round++) {
     u = Utilities.computeHmacSha256Signature(u, passwordBytes);
-    for (let i = 0; i < output.length; i++) output[i] = (output[i] ^ u[i]);
+    for (let i = 0; i < output.length; i++) {
+  output[i] = (output[i] ^ u[i]) & 0xFF;
+}
   }
 
   return output.slice(0, keyLength);

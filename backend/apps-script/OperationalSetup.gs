@@ -21,22 +21,28 @@ function previewOperationalSchema() {
  * Use only with a disposable sheet shared by the work account with the
  * personal account that owns this Apps Script project.
  */
+
 function testOperationalSheetAccess() {
   const spreadsheetId = getRequiredPrivateProperty_(
     AppConfig.PROPERTY.OPERATIONAL_TEST_SPREADSHEET_ID
   );
-  const masterId = getRequiredPrivateProperty_(AppConfig.PROPERTY.MASTER_SPREADSHEET_ID);
+
+  const masterId = getRequiredPrivateProperty_(
+    AppConfig.PROPERTY.MASTER_SPREADSHEET_ID
+  );
+
   if (spreadsheetId === masterId) {
     throw new Error("OPERATIONAL_AND_MASTER_IDS_MUST_DIFFER");
   }
 
   const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
   const name = spreadsheet.getName();
+
   if (!/test/i.test(name)) {
     throw new Error("OPERATIONAL_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
   }
 
-  return {
+  const result = {
     ok: true,
     access: "read",
     spreadsheetName: name,
@@ -44,6 +50,11 @@ function testOperationalSheetAccess() {
       return sheet.getName();
     })
   };
+
+  console.log("OPERATIONAL TEST ACCESS:");
+  console.log(JSON.stringify(result, null, 2));
+
+  return result;
 }
 
 /**
@@ -96,4 +107,88 @@ function initializeOperationalTestSchema() {
     spreadsheetName: access.spreadsheetName,
     sheets: Object.keys(schema)
   };
+}
+
+
+
+function verifyOperationalTestSchema() {
+  const spreadsheetId = getRequiredPrivateProperty_(
+    AppConfig.PROPERTY.OPERATIONAL_TEST_SPREADSHEET_ID
+  );
+
+  const masterId = getRequiredPrivateProperty_(
+    AppConfig.PROPERTY.MASTER_SPREADSHEET_ID
+  );
+
+  if (spreadsheetId === masterId) {
+    throw new Error("OPERATIONAL_AND_MASTER_IDS_MUST_DIFFER");
+  }
+
+  const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+
+  if (!/test/i.test(spreadsheet.getName())) {
+    throw new Error("OPERATIONAL_TEST_SHEET_NAME_MUST_INCLUDE_TEST");
+  }
+
+  // Read the canonical schema defined by the project.
+  const schema = getOperationalSchema_();
+  const checks = {};
+  let passed = 0;
+
+  Object.keys(schema).forEach(function (sheetName) {
+    const expectedHeaders = schema[sheetName];
+    const sheet = spreadsheet.getSheetByName(sheetName);
+
+    if (!sheet) {
+      checks[sheetName] = {
+        exists: false,
+        headersMatch: false
+      };
+      return;
+    }
+
+    const actualHeaders = sheet.getRange(
+      1, 1, 1, expectedHeaders.length
+    ).getDisplayValues()[0];
+
+    const mismatches = [];
+
+    expectedHeaders.forEach(function (header, index) {
+      if (actualHeaders[index] !== header) {
+        mismatches.push({
+          column: index + 1,
+          expected: header,
+          actual: actualHeaders[index]
+        });
+      }
+    });
+
+    const headersMatch = mismatches.length === 0;
+
+    checks[sheetName] = {
+      exists: true,
+      headersMatch: headersMatch,
+      expectedHeaders: expectedHeaders,
+      actualHeaders: actualHeaders,
+      mismatches: mismatches
+    };
+
+    if (headersMatch) {
+      passed++;
+    }
+  });
+
+  const output = {
+    ok: passed === Object.keys(schema).length,
+    spreadsheetName: spreadsheet.getName(),
+    passed: passed,
+    total: Object.keys(schema).length,
+    checks: checks,
+    dataChanged: false
+  };
+
+  console.log("OPERATIONAL SCHEMA VERIFICATION:");
+  console.log(JSON.stringify(output, null, 2));
+
+  return output;
 }

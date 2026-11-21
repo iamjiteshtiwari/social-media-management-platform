@@ -15,6 +15,10 @@ const ALLOWED_MEDIA_MIME_TYPES = Object.freeze({
   "video/webm": "video"
 });
 
+function getMediaUploadFolder_(folderId) {
+  return DriveApp.getFolderById(folderId);
+}
+
 function uploadUserMedia_(userId, input) {
   const value = input || {};
   const fileName = String(value.file_name || "").trim().replace(/[\\\/\r\n\0]/g, "_");
@@ -32,7 +36,7 @@ function uploadUserMedia_(userId, input) {
   }
   if (!bytes.length || bytes.length > MAX_MEDIA_UPLOAD_BYTES) throw new Error("MEDIA_SIZE_LIMIT");
   if (!isAllowedMediaSignature_(bytes, mimeType)) throw new Error("MEDIA_CONTENT_TYPE_MISMATCH");
-  const lock = LockService.getScriptLock();
+  const lock = getMediaUploadScriptLock_();
   if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
   let createdFile = null;
   try {
@@ -41,7 +45,7 @@ function uploadUserMedia_(userId, input) {
     if (!folderId || folderId === String(context.resource.published_media_folder_id || "")) {
       throw new Error("MEDIA_FOLDER_NOT_READY");
     }
-    const folder = DriveApp.getFolderById(folderId);
+    const folder = getMediaUploadFolder_(folderId);
     const blob = Utilities.newBlob(bytes, mimeType, fileName);
     createdFile = folder.createFile(blob);
     const library = getRequiredSheet_(context.workbook, "MediaLibrary");
@@ -64,9 +68,41 @@ function uploadUserMedia_(userId, input) {
         last_referenced_at: ""
       });
     } catch (sheetError) {
-      createdFile.setTrashed(true);
-      createdFile = null;
-      throw new Error("MEDIA_RECORD_WRITE_FAILED");
+      const failedDriveFileId = createdFile.getId();
+      let rollbackConfirmed = false;
+      let rollbackError = null;
+
+      try {
+        createdFile.setTrashed(true);
+        rollbackConfirmed = createdFile.isTrashed();
+      } catch (error) {
+        rollbackError = error;
+      }
+
+      if (rollbackConfirmed) {
+        createdFile = null;
+
+        console.error(JSON.stringify({
+          event: "MEDIA_UPLOAD_ROLLBACK_CONFIRMED",
+          user_id: String(userId),
+          drive_file_id: failedDriveFileId,
+          error: String(sheetError)
+        }));
+
+        throw new Error("MEDIA_RECORD_WRITE_FAILED");
+      }
+
+      console.error(JSON.stringify({
+        event: "MEDIA_UPLOAD_ROLLBACK_REQUIRES_RECONCILIATION",
+        user_id: String(userId),
+        drive_file_id: failedDriveFileId,
+        sheet_error: String(sheetError),
+        rollback_error: rollbackError
+          ? String(rollbackError)
+          : "TRASH_STATE_UNCONFIRMED"
+      }));
+
+      throw new Error("MEDIA_ROLLBACK_FAILED_RECONCILIATION_REQUIRED");
     }
     return {
       ok: true,
@@ -85,43 +121,91 @@ function uploadUserMedia_(userId, input) {
   }
 }
 
+
 function deleteUserMedia_(userId, mediaId) {
   const id = String(mediaId || "").trim();
   if (!id) throw new Error("MEDIA_NOT_FOUND");
+
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) throw new Error("TRY_AGAIN");
+
   try {
     const context = getOperationalContextForUser_(userId);
     const library = getRequiredSheet_(context.workbook, "MediaLibrary");
     const match = findRecordByValue_(library, "media_id", id);
     if (!match) throw new Error("MEDIA_NOT_FOUND");
+
     const media = rowToRecord_(library, match);
+    const status = String(media.status || "").toLowerCase();
+    const retention = String(media.retention_status || "").toLowerCase();
+
+    // Pending deletion must be handled by controlled recovery.
+    if (status === "trash_pending") {
+      throw new Error("MEDIA_TRASH_PENDING_RECONCILIATION_REQUIRED");
+    }
+
+    if (status === "trashed" || retention === "cleaned") {
+      throw new Error("MEDIA_ALREADY_TRASHED");
+    }
+
     const links = getRequiredSheet_(context.workbook, "PostMedia");
     if (links.getLastRow() >= 2) {
       const map = getHeaderMap_(links);
-      const values = links.getRange(2, map.media_id + 1, links.getLastRow() - 1, 1).getDisplayValues();
-      if (values.some(function (row) { return String(row[0] || "") === id; })) {
+      const values = links
+        .getRange(2, map.media_id + 1, links.getLastRow() - 1, 1)
+        .getDisplayValues();
+
+      if (values.some(function (row) {
+        return String(row[0] || "") === id;
+      })) {
         throw new Error("MEDIA_IN_USE");
       }
     }
-    if (String(media.status || "").toLowerCase() === "published" ||
-        String(media.retention_status || "").toLowerCase() === "protected") {
+
+    if (
+      status === "published" ||
+      status === "publishing" ||
+      retention === "protected" ||
+      retention === "keep" ||
+      retention === "legal_hold"
+    ) {
       throw new Error("MEDIA_PROTECTED");
     }
-    const fileId = String(media.drive_file_id || "");
+
+    const fileId = String(media.drive_file_id || "").trim();
+    if (!fileId) throw new Error("MEDIA_FILE_ID_MISSING");
+
     const file = getMediaDriveFile_(fileId);
     const parents = file.getParents();
     let inFolder = false;
+
     while (parents.hasNext()) {
-      if (parents.next().getId() === String(context.resource.media_folder_id)) inFolder = true;
+      if (
+        parents.next().getId() ===
+        String(context.resource.media_folder_id)
+      ) {
+        inFolder = true;
+      }
     }
+
     if (!inFolder) throw new Error("MEDIA_FOLDER_MISMATCH");
+
+    // Step 1: record intent before changing Drive.
+    updateSheetRowFields_(library, match.rowNumber, {
+      status: "trash_pending",
+      updated_at: new Date().toISOString()
+    });
+
+    // Step 2: if this fails, the Sheet remains pending for recovery.
     file.setTrashed(true);
+
+    // Step 3: if this fails, the Sheet remains pending for recovery.
     updateSheetRowFields_(library, match.rowNumber, {
       status: "trashed",
       retention_status: "cleaned",
       updated_at: new Date().toISOString()
     });
+
     appendAuditEvent_({
       user_id: String(userId),
       action: "media_deleted",
@@ -130,13 +214,20 @@ function deleteUserMedia_(userId, mediaId) {
       target_id: id,
       details: { reason: "USER_REQUEST" }
     });
-    return { ok: true, code: "MEDIA_DELETED", media_id: id };
+
+    return {
+      ok: true,
+      code: "MEDIA_DELETED",
+      media_id: id
+    };
   } finally {
     lock.releaseLock();
   }
 }
 
-/** Internal seam so TEST-only failure tests can substitute a synthetic Drive file. */
+/**
+ * Internal seam for isolated TEST-only media deletion tests.
+ */
 function getMediaDriveFile_(fileId) {
   return DriveApp.getFileById(fileId);
 }
@@ -155,4 +246,8 @@ function isAllowedMediaSignature_(bytes, mimeType) {
   if (mimeType === "video/mp4") return ascii(4, "ftyp");
   if (mimeType === "video/webm") return byte(0) === 0x1A && byte(1) === 0x45 && byte(2) === 0xDF && byte(3) === 0xA3;
   return false;
+}
+
+function getMediaUploadScriptLock_() {
+  return LockService.getScriptLock();
 }

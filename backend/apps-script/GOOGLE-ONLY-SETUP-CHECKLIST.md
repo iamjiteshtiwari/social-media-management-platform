@@ -1,96 +1,79 @@
-# Google-only backend setup checklist
+# Google-only backend TEST setup checklist
 
-This checklist is for the **development/test environment only**. Do not use real user, client, or social-account data during setup.
+This checklist applies only to the isolated development/test environment. Do not use real user, client, media or social-account data.
 
 ## Decision
 
-Use the existing personal and work Google accounts. Do not create a Cloudflare or Supabase dependency now. If a test exposes a blocker, record the exact failure and review the architecture before switching.
+The approved first architecture is Google Apps Script + Google Sheets + Google Drive using the existing personal and work Google accounts. Do not create a Cloudflare/Supabase production dependency. The optional worker benchmark is an isolated experiment and must not be deployed without a separate decision.
 
-## Phase A — Create the test resources
+## Existing TEST resources
 
-### A1. Personal Google account
-- [ ] Sign in to the personal Google account and confirm the account avatar.
-- [ ] Create a new, disposable Google Sheet named `SMM Master TEST`.
-- [ ] Create a separate Google Apps Script project named `SMM Backend TEST`.
-- [ ] Keep the spreadsheet private; do not share it publicly.
-- [ ] Copy the master spreadsheet ID from its URL for private Script Properties only.
+- Personal-owned master test workbook: SMM Master TEST.
+- Work-owned operational test workbook: SMM Operations TEST.
+- Isolated Apps Script TEST project: verify its owner/account and Script Properties before copying code or running a function.
+- Test Drive folders: use only dedicated TEST folders and synthetic files.
 
-### A2. Work Google account
-- [ ] Sign in to the work Google account and confirm the account avatar.
-- [ ] Create a disposable Google Sheet named `SMM Operations TEST`.
-- [ ] Create a disposable Drive folder named `SMM Media TEST`.
-- [ ] Share only the test operational sheet and test media folder with the personal account, using the minimum permission needed for the test.
-- [ ] Do not share the personal master sheet with staff or family.
+Never infer that the Apps Script editor contains the latest GitHub code. GitHub and Apps Script do not auto-sync.
 
-## Phase B — Add source code
+## Source synchronization
 
-Copy each existing source module from `backend/apps-script/` into a matching file in the test Apps Script project:
-- [ ] `Api.gs`
-- [ ] `Config.gs`
-- [ ] `Schema.gs`
-- [ ] `SheetRepository.gs`
-- [ ] `CaptchaService.gs`
-- [ ] `PasswordService.gs`
-- [ ] `AccountService.gs`
-- [ ] `RegistrationService.gs`
-- [ ] `OtpService.gs`
-- [ ] `LoginService.gs`
-- [ ] `PasswordRecoveryService.gs`
-- [ ] `SessionService.gs`
-- [ ] `AccountAdminService.gs`
-- [ ] `HealthService.gs`
-- [ ] `OperationalSetup.gs`
-- [ ] `Tests.gs`
+1. Use the reviewed source branch and exact commit, not a random branch or the live/default JTCodes branch.
+2. Copy the complete contents of each required .gs file into the matching file in the isolated TEST Apps Script project.
+3. Confirm the target project is the TEST project and its private Script Properties point only to SMM Master TEST and SMM Operations TEST.
+4. Do not paste Script Property values, IDs or secrets into GitHub, Notion or chat.
+5. Record the source commit and the date of the manual copy. Re-check the Apps Script editor after any later source update.
 
-`MaintenanceService.gs` is not present yet; do not invent or paste a substitute. Complete and verify that module as a separate task.
+## Apps Script source inventory
 
-Do not paste any secret into code, GitHub, Notion, or chat.
+Core services:
+- Api.gs, Config.gs, HealthService.gs, CaptchaService.gs
+- AccountService.gs, AccountAdminService.gs, RegistrationService.gs, OtpService.gs
+- LoginService.gs, PasswordService.gs, PasswordRecoveryService.gs, SessionService.gs
+- Schema.gs, SheetRepository.gs, OperationalSetup.gs, OperationalService.gs
+- MediaService.gs, MaintenanceService.gs
+- PublishingQueueService.gs, PublishingClaimService.gs, PublishingService.gs, PublishingWorkerService.gs
+- MetaOAuthStateService.gs, PublishingProviderAdapter.gs
 
-## Phase C — Private Script Properties
+Focused TEST files:
+- Tests.gs, SessionLifecycleTest.gs, PostDeletionSafetyTest.gs, PostAggregateStatusTest.gs
+- CancellationSafetyTest.gs, CancellationSafetyIntegrationTest.gs
+- PublishingEndToEndTest.gs
+- MediaFailureInjectionTest.gs, PostMediaReplacementFailureTest.gs, PostMediaOldLinkFailureTest.gs
+- MediaDeleteSheetWriteFailureTest.gs, MediaCleanupSheetWriteFailureTest.gs, MediaTrashReconciliationTest.gs
+- MetaOAuthStateTest.gs, MetaOAuthStateLifecycleTest.gs, MediaDeleteDriveTrashFailureTest.gs
 
-In Apps Script, open **Project Settings → Script Properties** and add the required values privately:
+The Apps Script manifest is appsscript.json. Include it only when managing the project with a source-control workflow that supports the manifest; do not paste JSON into a .gs editor file.
 
-| Property | Value |
-| --- | --- |
-| `APP_ALLOWED_HOSTNAME` | `social.iamjiteshtiwari.in` |
-| `MASTER_SPREADSHEET_ID` | ID of the disposable personal-owned master test sheet |
-| `RECAPTCHA_REGISTRATION_SECRET` | Rotated registration secret, entered directly in Apps Script |
-| `RECAPTCHA_LOGIN_SECRET` | Rotated login secret if a separate login key is configured |
-| `RECAPTCHA_MIN_SCORE` | `0.5` only if using score-based reCAPTCHA keys |
+## Safe verification order
 
-For score-based keys, set expected action properties to match the frontend's configured action names. Do not guess the CAPTCHA key type: verify the type and allowed hostname in the CAPTCHA provider console first. The public site keys are not secrets; the secret keys are.
+1. Confirm the active Google account and exact TEST project.
+2. Confirm Master and Operations TEST workbook IDs are different and the workbook names contain TEST.
+3. Run read-only schema verification before any initialization.
+4. Run pure in-memory tests first.
+5. Run focused TEST workbook tests one at a time and inspect the full execution log.
+6. Verify every test's ok, passed/total, cleanup result, and any realDriveTouched / realSheetsTouched flags.
+7. Confirm synthetic rows are removed or explicitly recorded for manual cleanup.
+8. Record which exact source commit is installed in Apps Script.
 
-The previously shared CAPTCHA secrets must be rotated before testing. Do not send replacement secrets to ChatGPT.
+Do not run all tests blindly. Some tests intentionally require a TEST workbook, create synthetic rows, or require manual confirmation. Read each test's guard and side effects first.
 
-## Phase D — Safe local tests
+## Important safety flags
 
-- [ ] Run `runBackendSelfTests` in the test Apps Script project.
-- [ ] Review the execution result and logs for unexpected errors or sensitive data.
-- [ ] Run the schema preview function and inspect the returned column definitions.
-- [ ] Only after confirming the master spreadsheet ID points to the disposable test sheet, set `ENABLE_SCHEMA_INITIALIZATION=YES` temporarily and run `initializeMasterSchema`.
-- [ ] Remove `ENABLE_SCHEMA_INITIALIZATION` after the test.
-- [ ] Confirm expected tabs and headers were created in the disposable test master sheet.
-- [ ] Test work-owned test-sheet access from the personal-owned script only after the repository supports that explicit test.
-- [ ] Revoke the test share and confirm access fails safely.
+- Keep ENABLE_MEDIA_CLEANUP disabled. Never enable it for routine testing.
+- Keep ENABLE_PUBLIC_REGISTRATION and ENABLE_PUBLIC_RECOVERY unset.
+- Do not enable public login/session/admin routes.
+- Do not enable time-driven triggers or provider calls.
+- Keep real Meta credentials and social accounts out of TEST.
+- Do not run cleanup against real Drive media.
 
-## Phase E — Before any browser or real-data integration
+## Current blockers before integration
 
-Do not deploy a public endpoint or connect the real registration/login forms yet. First:
-- [ ] Prove a browser can call the test endpoint and handle responses/redirects correctly.
-- [ ] Resolve secure session credential transport while preserving the fixed nine-hour expiry, no sliding extension, one active session, and revocation requirements.
-- [ ] Verify server-side CAPTCHA with valid, missing, invalid, expired, and replayed tokens.
-- [ ] Review authentication, password hashing, OTP delivery, rate limiting, and account lifecycle before implementing live registration.
-- [ ] Verify user/brand ownership on every protected operation.
-- [ ] Demonstrate backup and restore for test data.
+- Secure browser session transport and cross-origin behavior are not approved.
+- The Master-to-Operations signed authorization contract is not implemented or verified.
+- Complete Meta OAuth callback and token lifecycle are not implemented.
+- Publishing provider is mock-only; no real publishing is available.
+- Runtime tests must be repeated against the exact reconciled source in the isolated TEST project before treating this snapshot as verified.
 
 ## Stop conditions
 
-Stop and review instead of bypassing a check if:
-- the wrong Google account owns a resource;
-- a test would touch real user/client data;
-- CAPTCHA type/hostname/secret is uncertain;
-- an API test would require placing credentials in a URL, localStorage, or logs;
-- a browser test fails due to Apps Script redirects/CORS;
-- a session design cannot meet the agreed policy securely.
-
-**Current status:** source scaffold only. No Apps Script project, Sheets, Drive folders, CAPTCHA secrets, deployment, or production integration has been created by this repository change.
+Stop and review if a workbook name/ID is unexpected, a property points to a non-TEST resource, a test tries to resolve an unknown Drive file, cleanup is requested without explicit approval, or any real social/provider credential is present.

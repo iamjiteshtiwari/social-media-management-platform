@@ -108,7 +108,7 @@ function testPostAggregateStatusLifecycle() {
   }
 
   const passed = Object.keys(checks).filter(function (key) { return checks[key]; }).length;
-  return {
+    const result = {
     ok: passed === cases.length && !failureCode && cleanupErrors.length === 0,
     passed: passed,
     total: cases.length,
@@ -117,4 +117,7 @@ function testPostAggregateStatusLifecycle() {
     cleanupPassed: cleanupErrors.length === 0,
     cleanupErrors: cleanupErrors
   };
+
+  console.log(JSON.stringify(result, null, 2));
+  return result;
 }
