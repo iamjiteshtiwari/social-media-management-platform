@@ -1,39 +1,39 @@
-# Social Media Management Platform
+# Social Media Management Platform — Frontend Integration Work
 
-A custom, mobile-first social media management platform prototype built with original HTML, CSS and JavaScript. The frontend-first workflow is intentional: finish and review the visual prototype before connecting any backend or third-party services.
+A custom, mobile-first social media management platform frontend built with semantic HTML, the project's own CSS design system and vanilla JavaScript. This branch contains isolated frontend integration preparation; it is not the live/default branch.
 
-## Visual prototype pages
+## Product workspace
 
-- `index.html` — platform overview
-- `login.html` — sign-in
-- `register.html` — create account
-- `forgot-password.html` — password recovery
-- `verify-email.html` — email OTP entry
-- `approval-pending.html` — pending administrator approval
-- `dashboard.html` — workspace overview
-- `brand-management.html` — brands and accounts
-- `content-planner.html` — calendar preview
-- `media-library.html` — media library
-- `post-editor.html` — composer and local-only post preview
-- `account-settings.html` — profile and security settings preview
-- `social-accounts.html` — social network integration options preview
-- `publishing-queue.html` — draft, scheduled, published and attention-needed posts
-- `analytics.html` — sample performance and platform reporting
-- `notifications.html` — local-only notification filters and read-state interactions
-- `admin-approvals.html` — administrator approval queue concept
+- Dashboard and workspace navigation
+- Brand management
+- Social account connection screen
+- Content planner and post editor
+- Media library and local media staging
+- Publishing queue and status views
+- Analytics, notifications and admin approvals
+- Account registration, email verification, recovery and settings screens
 
-## Theme support
+The screens establish the product workflow. They do not prove that data is persisted or that a social network is connected.
 
-All pages include a light/dark theme toggle. The first visit follows the device theme; manual selection is stored in browser local storage and is shared across pages in this browser. The matching light/dark favicon and mobile browser theme color are updated with the selected theme. Theme preference is frontend-only and is not synced across browsers or accounts.
+## Current branch status — 21 November 2026
 
-## Quality assurance status
+- This branch is 36 commits ahead of JTCodes and has not been merged or deployed.
+- The API client permits only the non-sensitive health action. All other actions return AUTH_TRANSPORT_NOT_CONFIGURED before sending a request.
+- The API URL remains unset. No credentials, account details or workspace data are sent to an Apps Script endpoint by this branch.
+- Forms and workspace actions remain prototype/local-only unless a specific page explicitly reports service unavailability.
+- The frontend/backend contract is planning documentation, not an enabled backend API.
+- Full browser/device QA and end-to-end tests remain outstanding.
 
-The page inventory exists, but full browser and device QA is not yet verified. See [the visual prototype checklist](docs/visual-prototype-checklist.md) for remaining mobile, tablet, desktop, accessibility, navigation and interaction checks.
+## Safety and implementation rules
 
-## Prototype boundary
+- Do not put session credentials, provider tokens, API secrets or trusted user/role IDs in browser code.
+- Do not configure an API endpoint or connect protected actions until secure session transport, cross-origin behavior, authorization and response contracts are verified.
+- Admin authorization must be enforced server-side; hiding controls is not security.
+- Do not claim that local validation, staged media or preview rendering saved data.
+- Keep the existing custom CSS and shared components. Do not add Bootstrap or duplicate pages.
+- The backend source lives on a separate development branch. Do not merge or deploy this branch without reviewing both frontend and backend contracts.
+- The personal portfolio repository remains completely separate.
 
-This is a visual/local-interaction prototype only. It does not create or authenticate real accounts, send verification or recovery emails, persist data, upload media, connect social accounts, schedule posts, publish content, or fetch live analytics. Sample users, posts, metrics and notifications are fictional. Do not imply that any local preview action changed a real account or service.
+## Quality assurance
 
-## Project boundary
-
-Use the existing custom CSS design system and shared components; do not add Bootstrap or duplicate pages. The main portfolio website and its repository are separate and out of scope. Backend integration begins only after the visual prototype is reviewed and approved.
+Use docs/visual-prototype-checklist.md for navigation, route refresh, mobile/tablet/desktop, keyboard/accessibility, theme and interaction checks. Use docs/FRONTEND-BACKEND-CONTRACT.md before any API wiring.
