@@ -13,6 +13,9 @@
   const pageScriptInitializers = {
     "dashboard-ui.js": "dashboard",
     "workspace-demo-ui.js": "workspaceDemo",
+    "brand-management-ui.js": "brandManagement",
+    "content-planner-ui.js": "contentPlanner",
+    "media-staging-ui.js": "mediaStaging",
     "post-editor-ui.js": "postEditor"
   };
   const loadedScripts = new Set([...document.scripts].map((script) => {
@@ -87,6 +90,15 @@
     });
   }
 
+  function runPageCleanups() {
+    const cleanups = window.SMMPageCleanups || {};
+    Object.values(cleanups).forEach((cleanup) => {
+      if (typeof cleanup === "function") {
+        try { cleanup(); } catch (_) { /* Cleanup must not block navigation. */ }
+      }
+    });
+  }
+
   async function navigate(rawUrl, options = {}) {
     const url = new URL(rawUrl, location.href);
     if (!allowedPages.has(pageName(url))) { location.href = url.href; return; }
@@ -105,6 +117,7 @@
       await ensureStylesheets(nextDoc);
       if (id !== navigationId) return;
 
+      runPageCleanups();
       currentMain.className = nextMain.className;
       currentMain.innerHTML = nextMain.innerHTML;
       document.body.className = nextDoc.body.className;

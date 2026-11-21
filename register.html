@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/layout.css"><link rel="stylesheet" href="css/auth.css">
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <script src="js/main.js" defer></script>
-  <script src="js/auth-ui.js" defer></script>
+  <script src="js/api-client.js" defer></script><script src="js/auth-ui.js" defer></script>
 </head>
 <body class="auth-page">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -26,13 +26,13 @@
     <section class="auth-story">
       <p class="eyebrow">Start organized</p>
       <h1>Your content workflow, all in one place.</h1>
-      <p>Create your workspace profile first. Account verification and admin approval will be part of the real integration stage.</p>
+      <p>Create your account with your details. Email verification and workspace approval follow the account security workflow.</p>
       <div class="step-list"><div><span>01</span><p><strong>Create your profile</strong><br>Share your basic account details.</p></div><div><span>02</span><p><strong>Verify your email</strong><br>A planned email code step confirms ownership.</p></div><div><span>03</span><p><strong>Wait for approval</strong><br>Workspace access opens after approval.</p></div></div>
-      <p class="auth-small-note">This page is a design prototype and does not create or store an account.</p>
+      <p class="auth-small-note">Account creation becomes available when the secure account service is configured.</p>
     </section>
     <section class="auth-card auth-card--wide" aria-labelledby="create-account-title">
       <div class="auth-card-heading"><span class="auth-mark" aria-hidden="true">&lt;/&gt;</span><p class="eyebrow">New workspace member</p><h2 id="create-account-title">Create your account</h2><p>Start with your basic details. All fields are required.</p></div>
-      <form class="auth-form" data-demo-form>
+      <form class="auth-form" data-auth-action="register">
         <div class="form-grid">
           <div class="form-field"><label for="register-name">Full name</label><input id="register-name" name="full_name" autocomplete="name" placeholder="Your full name" required></div>
           <div class="form-field"><label for="register-username">Username</label><input id="register-username" name="username" autocomplete="username" placeholder="Choose a username" minlength="3" required><small>At least 3 characters.</small></div>
@@ -41,13 +41,13 @@
           <div class="form-field"><label for="register-password">Create password</label><div class="password-field"><input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required><button type="button" class="password-toggle" data-password-toggle="register-password" aria-label="Show password">Show</button></div></div>
           <div class="form-field"><label for="register-confirm">Confirm password</label><input id="register-confirm" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Enter it again" required></div>
         </div>
-        <label class="checkbox-label terms-check"><input type="checkbox" name="terms" required> I understand this is a preview and account creation is not active yet.</label>
+        <label class="checkbox-label terms-check"><input type="checkbox" name="terms" required> I agree to the platform terms and understand my account must be verified and approved before access.</label>
         <section class="captcha-preview captcha-widget" aria-labelledby="registration-captcha-title" data-captcha-purpose="registration">
           <div class="captcha-preview__copy">
             <strong id="registration-captcha-title">Security verification</strong>
-            <p>Complete the “I’m not a robot” check. Server-side verification will be connected during backend integration.</p>
+            <p>Complete the “I’m not a robot” check. Security verification is required before the account request can be accepted.</p>
             <div class="g-recaptcha" data-sitekey="6LeoRfItAAAAAOhG-CqWBreOBqbS9nSwItgZ0cFE" data-theme="light"></div>
-            <span class="captcha-preview__status"><span aria-hidden="true"></span> Widget added · server verification pending</span>
+            <span class="captcha-preview__status"><span aria-hidden="true"></span> Security verification</span>
           </div>
         </section>
         <button class="button-primary" type="submit">Continue to email verification <span aria-hidden="true">→</span></button>
