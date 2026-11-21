@@ -17,7 +17,7 @@ The screens establish the product workflow. They do not prove that data is persi
 
 ## Current branch status — 21 November 2026
 
-- This branch is 36 commits ahead of JTCodes and has not been merged or deployed.
+- This branch is 37 commits ahead of JTCodes and has not been merged or deployed.
 - The API client permits only the non-sensitive health action. All other actions return AUTH_TRANSPORT_NOT_CONFIGURED before sending a request.
 - The API URL remains unset. No credentials, account details or workspace data are sent to an Apps Script endpoint by this branch.
 - Forms and workspace actions remain prototype/local-only unless a specific page explicitly reports service unavailability.
