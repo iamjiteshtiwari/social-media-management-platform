@@ -21,7 +21,14 @@ window.SMMPageInitializers.postEditor = function () {
       scheduleInput.value = local.toISOString().slice(0, 16);
     }
   }
+  const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
+  const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm"]);
   let selectedFiles = [];
+  const previewUrls = new Map();
+  const getPreviewUrl = (file) => {
+    if (!previewUrls.has(file)) previewUrls.set(file, URL.createObjectURL(file));
+    return previewUrls.get(file);
+  };
   if (feedback) {
     feedback.textContent = "";
     feedback.classList.remove("is-error");
@@ -62,6 +69,10 @@ window.SMMPageInitializers.postEditor = function () {
           remove.textContent = "Remove";
           remove.setAttribute("aria-label", "Remove " + file.name);
           remove.addEventListener("click", () => {
+            const removed = selectedFiles[index];
+            const previewUrl = previewUrls.get(removed);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrls.delete(removed);
             selectedFiles.splice(index, 1);
             renderMedia();
           });
@@ -76,7 +87,7 @@ window.SMMPageInitializers.postEditor = function () {
         const img = document.createElement("img");
         img.alt = "Selected local media preview";
         img.className = "social-preview-media__image";
-        img.src = URL.createObjectURL(selectedFiles[0]);
+        img.src = getPreviewUrl(selectedFiles[0]);
         mediaPreview.append(img);
         const label = document.createElement("small");
         label.textContent = selectedFiles.length > 1 ? selectedFiles.length + " files selected locally" : selectedFiles[0].name;
@@ -108,14 +119,14 @@ window.SMMPageInitializers.postEditor = function () {
   mediaButton?.addEventListener("click", () => mediaInput?.click());
   mediaInput?.addEventListener("change", () => {
     const incoming = Array.from(mediaInput.files || []);
-    const allowed = incoming.filter((file) => /^(image|video)\//.test(file.type));
-    const tooLarge = allowed.filter((file) => file.size > 50 * 1024 * 1024);
-    const accepted = allowed.filter((file) => file.size <= 50 * 1024 * 1024);
+    const allowed = incoming.filter((file) => ALLOWED_MEDIA_TYPES.has(file.type));
+    const tooLarge = allowed.filter((file) => file.size > MAX_MEDIA_BYTES);
+    const accepted = allowed.filter((file) => file.size <= MAX_MEDIA_BYTES);
     const existing = new Set(selectedFiles.map((file) => file.name + ":" + file.size + ":" + file.lastModified));
     const additions = accepted.filter((file) => !existing.has(file.name + ":" + file.size + ":" + file.lastModified));
     selectedFiles = selectedFiles.concat(additions).slice(0, 10);
     if (incoming.length !== accepted.length || tooLarge.length) {
-      setFeedback("Only image/video files up to 50 MB each are accepted. Up to 10 files can be staged. Check the selected files.", true);
+      setFeedback("Only JPEG, PNG, WebP, GIF, MP4 and WebM files up to 8 MB each are accepted. Up to 10 files can be staged. Check the selected files.", true);
     } else if (selectedFiles.length === 10 && additions.length < accepted.length) {
       setFeedback("A maximum of 10 media files can be staged.", true);
     } else if (additions.length) {
@@ -126,6 +137,12 @@ window.SMMPageInitializers.postEditor = function () {
   });
   render();
   renderMedia();
+  window.SMMPageCleanups = window.SMMPageCleanups || {};
+  window.SMMPageCleanups.postEditor = () => {
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    previewUrls.clear();
+    selectedFiles = [];
+  };
   const form = document.querySelector("[data-post-preview-form]");
   document.querySelectorAll("[data-preview-action]").forEach((button) => {
     button.addEventListener("click", () => {
