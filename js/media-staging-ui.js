@@ -1,5 +1,6 @@
 "use strict";
 window.SMMPageInitializers = window.SMMPageInitializers || {};
+window.SMMPageCleanups = window.SMMPageCleanups || {};
 window.SMMPageInitializers.mediaStaging = function () {
   const input = document.querySelector("#media-upload-input");
   const openButton = document.querySelector("[data-open-media-library-picker]");
@@ -10,15 +11,34 @@ window.SMMPageInitializers.mediaStaging = function () {
   const reset = document.querySelector("[data-reset-media-filters]");
   if (!input || !grid || input.dataset.bound === "true") return;
   input.dataset.bound = "true";
+
+  const MAX_FILE_BYTES = 8 * 1024 * 1024;
+  const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+  const VIDEO_TYPES = new Set(["video/mp4", "video/webm"]);
   let staged = [];
-  const bytesLabel = (bytes) => bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + " KB" : (bytes / (1024 * 1024)).toFixed(1) + " MB";
-  const kindOf = (file) => file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf") ? "document" : "other";
+
+  const fileId = (file) => file.name + ":" + file.size + ":" + file.lastModified;
+  const kindOf = (file) => IMAGE_TYPES.has(file.type) ? "image" : VIDEO_TYPES.has(file.type) ? "video" : "other";
+  const bytesLabel = (bytes) => bytes < 1024 * 1024
+    ? Math.max(1, Math.round(bytes / 1024)) + " KB"
+    : (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  const announce = (message, isError = false) => {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle("is-error", isError);
+  };
+  const revokePreview = (item) => {
+    if (item.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl);
+      item.previewUrl = "";
+    }
+  };
   const matches = (item) => {
     const q = (search?.value || "").trim().toLowerCase();
     const kind = typeFilter?.value || "All files";
-    const name = item.file ? item.file.name : item.name;
-    const type = item.file ? kindOf(item.file) : item.type;
-    return (!q || name.toLowerCase().includes(q)) && (kind === "All files" || (kind === "Images" && type === "image") || (kind === "Videos" && type === "video") || (kind === "Documents" && type === "document"));
+    return (!q || item.file.name.toLowerCase().includes(q)) &&
+      (kind === "All files" || (kind === "Images" && item.type === "image") ||
+       (kind === "Videos" && item.type === "video"));
   };
   const render = () => {
     grid.querySelectorAll("[data-staged-media]").forEach((node) => node.remove());
@@ -33,18 +53,19 @@ window.SMMPageInitializers.mediaStaging = function () {
         const img = document.createElement("img");
         img.alt = "Local preview of " + item.file.name;
         img.loading = "lazy";
-        img.src = URL.createObjectURL(item.file);
+        img.src = item.previewUrl;
         img.style.cssText = "width:100%;height:100%;object-fit:cover";
         preview.append(img);
       } else {
         const mark = document.createElement("span");
-        mark.textContent = item.type === "video" ? "▷" : "▤";
+        mark.textContent = "▷";
         preview.append(mark);
       }
       const title = document.createElement("strong");
       title.textContent = item.file.name;
       const meta = document.createElement("small");
-      meta.textContent = (item.type === "image" ? "Image" : item.type === "video" ? "Video" : "PDF") + " · " + bytesLabel(item.file.size) + " · Local only";
+      meta.textContent = (item.type === "image" ? "Image" : "Video") +
+        " · " + bytesLabel(item.file.size) + " · Local only";
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "button-secondary";
@@ -52,40 +73,60 @@ window.SMMPageInitializers.mediaStaging = function () {
       remove.setAttribute("aria-label", "Remove staged file " + item.file.name);
       remove.addEventListener("click", () => {
         staged = staged.filter((entry) => entry.id !== item.id);
+        revokePreview(item);
         render();
         announce("Removed " + item.file.name + " from this page.");
       });
       card.append(preview, title, meta, remove);
       grid.append(card);
     });
-    const count = staged.length;
-    if (count && status) status.textContent = count + " file(s) staged locally. Nothing has been uploaded or saved to Google Drive.";
+    if (staged.length && status) {
+      status.textContent = staged.length +
+        " file(s) staged locally. Nothing has been uploaded or saved to Google Drive.";
+    }
   };
-  const announce = (message, isError = false) => {
-    if (!status) return;
-    status.textContent = message;
-    status.classList.toggle("is-error", isError);
-  };
+
   openButton?.addEventListener("click", () => input.click());
   input.addEventListener("change", () => {
     const files = Array.from(input.files || []);
-    const accepted = [];
+    const additions = [];
     const rejected = [];
+    const known = new Set(staged.map((item) => item.id));
+
     files.forEach((file) => {
       const type = kindOf(file);
-      if (!["image", "video", "document"].includes(type)) rejected.push(file.name + " (unsupported type)");
-      else if (file.size > 50 * 1024 * 1024) rejected.push(file.name + " (over 50 MB)");
-      else accepted.push({ id: file.name + ":" + file.size + ":" + file.lastModified, file, type });
+      if (type === "other") rejected.push(file.name + " (unsupported file type)");
+      else if (file.size > MAX_FILE_BYTES) rejected.push(file.name + " (over 8 MB)");
+      else {
+        const id = fileId(file);
+        if (!known.has(id)) {
+          known.add(id);
+          additions.push({ id, file, type });
+        }
+      }
     });
-    const existing = new Set(staged.map((item) => item.id));
-    const additions = accepted.filter((item) => !existing.has(item.id));
-    staged = staged.concat(additions).slice(0, 100);
+
+    const availableSlots = Math.max(0, 100 - staged.length);
+    const accepted = additions.slice(0, availableSlots);
+    accepted.forEach((item) => {
+      item.previewUrl = item.type === "image" ? URL.createObjectURL(item.file) : "";
+    });
+    staged = staged.concat(accepted);
+
+    if (additions.length > availableSlots) {
+      rejected.push((additions.length - availableSlots) + " file(s) (100-file staging limit)");
+    }
+
     render();
-    if (rejected.length) announce("Some files were skipped: " + rejected.slice(0, 3).join(", ") + ". Supported: images, videos and PDF files up to 50 MB.", true);
-    else if (staged.length >= 100 && additions.length < accepted.length) announce("A maximum of 100 local files can be staged.", true);
-    else if (additions.length) announce(additions.length + " file(s) selected locally. No upload or cloud save occurred.");
+    if (rejected.length) {
+      announce("Some files were skipped: " + rejected.slice(0, 3).join(", ") +
+        ". Supported: JPEG, PNG, WebP, GIF, MP4 and WebM up to 8 MB each.", true);
+    } else if (accepted.length) {
+      announce(accepted.length + " file(s) selected locally. No upload or cloud save occurred.");
+    }
     input.value = "";
   });
+
   search?.addEventListener("input", render);
   typeFilter?.addEventListener("change", render);
   reset?.addEventListener("click", () => {
@@ -93,6 +134,11 @@ window.SMMPageInitializers.mediaStaging = function () {
     if (typeFilter) typeFilter.value = "All files";
     render();
   });
+
+  window.SMMPageCleanups.mediaStaging = () => {
+    staged.forEach(revokePreview);
+    staged = [];
+  };
   render();
 };
 document.addEventListener("DOMContentLoaded", window.SMMPageInitializers.mediaStaging);
