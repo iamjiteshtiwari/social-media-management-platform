@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMM Session Cookie Proof</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { max-width: 680px; margin: 8vh auto; padding: 24px; line-height: 1.5; }
+    main { border: 1px solid #8886; border-radius: 16px; padding: 24px; }
+    label { display: block; margin: 14px 0 5px; }
+    input { box-sizing: border-box; width: 100%; padding: 11px; border-radius: 8px; border: 1px solid #8888; }
+    button { margin: 14px 8px 0 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #8882; padding: 14px; border-radius: 8px; min-height: 80px; }
+    .hint { opacity: .75; font-size: .92rem; }
+  </style>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>Session cookie transport proof</h1>
+    <p class="hint">Synthetic local-only account. The session cookie is HttpOnly; this page never reads it.</p>
+    <form id="login-form">
+      <label for="email">Demo email</label>
+      <input id="email" type="email" value="demo@example.test" autocomplete="username" required>
+      <label for="password">Local demo password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button type="submit">Create session</button>
+    </form>
+    <div>
+      <button id="check">Check session</button>
+      <button id="logout">Logout</button>
+    </div>
+    <h2>Test output</h2>
+    <pre id="output" aria-live="polite">Waiting for a test action…</pre>
+  </main>
+</body>
+</html>
