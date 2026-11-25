@@ -60,7 +60,8 @@ async function main() {
       const result = await fn();
       if (assert(name, result.ok, result)) passed++; else failed++;
     } catch (error) {
-      if (assert(name, false, { error: String(error) })) passed++; else failed++;
+      assert(name, false, { error: String(error) });
+      failed++;
     }
   }
 
