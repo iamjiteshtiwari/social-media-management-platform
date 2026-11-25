@@ -7,7 +7,7 @@ import path from "node:path";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.PORT || 8787);
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:4173";
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://127.0.0.1:4173";
 const DEMO_EMAIL = process.env.SMM_DEMO_EMAIL || "demo@example.test";
 const DEMO_PASSWORD = process.env.SMM_DEMO_PASSWORD;
 
@@ -39,9 +39,7 @@ function readCookie(req, name) {
   for (const part of raw.split(";")) {
     const index = part.indexOf("=");
     if (index < 0) continue;
-    if (part.slice(0, index).trim() === name) {
-      return part.slice(index + 1).trim();
-    }
+    if (part.slice(0, index).trim() === name) return part.slice(index + 1).trim();
   }
   return null;
 }
@@ -93,7 +91,7 @@ function getSession(req) {
 
 const server = http.createServer(async (req, res) => {
   const cors = corsHeaders(req);
-  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  const url = new URL(req.url, `http://${req.headers.host || "127.0.0.1"}`);
 
   if (req.method === "OPTIONS") {
     if (!requestOriginAllowed(req)) return sendJson(res, 403, { error: "ORIGIN_NOT_ALLOWED" });
@@ -101,7 +99,7 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  if (url.pathname.startsWith("/api/") && req.headers.origin && !requestOriginAllowed(req)) {
+  if (url.pathname.startsWith("/api/") && !requestOriginAllowed(req)) {
     return sendJson(res, 403, { error: "ORIGIN_NOT_ALLOWED" });
   }
 
@@ -110,7 +108,6 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && url.pathname === "/api/login") {
-    if (!requestOriginAllowed(req)) return sendJson(res, 403, { error: "ORIGIN_NOT_ALLOWED" });
     try {
       const body = await readBody(req);
       const email = String(body.email || "").trim().toLowerCase();
@@ -127,7 +124,7 @@ const server = http.createServer(async (req, res) => {
       const token = crypto.randomBytes(32).toString("base64url");
       const csrfToken = crypto.randomBytes(24).toString("base64url");
       const expiresAt = Date.now() + SESSION_MS;
-      sessions.set(token, { email, csrfToken, createdAt: Date.now(), expiresAt });
+      sessions.set(token, { email, csrfToken, expiresAt });
 
       return sendJson(res, 200, {
         ok: true,
@@ -160,7 +157,6 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && url.pathname === "/api/logout") {
-    if (!requestOriginAllowed(req)) return sendJson(res, 403, { error: "ORIGIN_NOT_ALLOWED" }, cors);
     const session = getSession(req);
     if (!session) {
       return sendJson(res, 401, { error: "SESSION_INVALID" }, {
@@ -183,7 +179,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
-      "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src http://localhost:8787; base-uri 'none'; frame-ancestors 'none'",
+      "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src http://127.0.0.1:8787; base-uri 'none'; frame-ancestors 'none'",
       "X-Content-Type-Options": "nosniff"
     });
     return res.end(html);
@@ -193,7 +189,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Local API listening at http://localhost:${PORT}`);
+  console.log(`Local API listening at http://127.0.0.1:${PORT}`);
   console.log(`Allowed frontend origin: ${FRONTEND_ORIGIN}`);
   console.log("Synthetic in-memory sessions only. Do not expose this server publicly.");
 });
