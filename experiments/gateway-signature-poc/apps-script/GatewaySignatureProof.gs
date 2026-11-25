@@ -156,10 +156,11 @@ function gatewayProofClaimNonce_(requestId, timestamp, now) {
       }
     });
 
-    if (expiredKeys.length) store.deleteProperties(expiredKeys.reduce(function(out, key) {
-      out[key] = true;
-      return out;
-    }, {}));
+    if (expiredKeys.length) {
+      expiredKeys.forEach(function(key) {
+        store.deleteProperty(key);
+      });
+    }
 
     const nonceKey = prefix + requestId.replace(/-/g, "");
     if (store.getProperty(nonceKey) !== null) {
