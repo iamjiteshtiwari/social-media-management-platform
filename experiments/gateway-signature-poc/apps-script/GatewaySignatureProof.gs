@@ -78,16 +78,6 @@ function gatewayProofHandlePost_(e) {
     return gatewayProofJson_({ ok: false, code: "ACTION_NOT_ALLOWED" });
   }
 
-  let payload;
-  try {
-    payload = JSON.parse(payloadText);
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      throw new Error("INVALID_PAYLOAD");
-    }
-  } catch (error) {
-    return gatewayProofJson_({ ok: false, code: "INVALID_PAYLOAD" });
-  }
-
   let secret;
   try {
     secret = PropertiesService.getScriptProperties()
@@ -116,6 +106,16 @@ function gatewayProofHandlePost_(e) {
 
   if (!gatewayProofConstantTimeEquals_(signature, expectedSignature)) {
     return gatewayProofJson_({ ok: false, code: "INVALID_GATEWAY_SIGNATURE" });
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(payloadText);
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error("INVALID_PAYLOAD");
+    }
+  } catch (error) {
+    return gatewayProofJson_({ ok: false, code: "INVALID_PAYLOAD" });
   }
 
   const nonceResult = gatewayProofClaimNonce_(requestId, timestamp, now);
