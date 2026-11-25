@@ -108,7 +108,7 @@ function gatewayProofHandlePost_(e) {
   let expectedSignature;
   try {
     expectedSignature = Utilities.base64Encode(
-      Utilities.computeHmacSha256Signature(canonical, secret)
+      Utilities.computeHmacSha256Signature(canonical, secret, Utilities.Charset.UTF_8)
     );
   } catch (error) {
     return gatewayProofJson_({ ok: false, code: "GATEWAY_AUTH_FAILED" });
