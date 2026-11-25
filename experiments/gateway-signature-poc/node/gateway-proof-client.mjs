@@ -66,6 +66,11 @@ async function main() {
 
   await check("Valid signed request accepted and response readable", async () => {
     const result = await send(makeEnvelope());
+    console.log("Transport:", JSON.stringify({
+      httpStatus: result.httpStatus,
+      redirected: result.redirected,
+      finalHost: result.finalHost
+    }));
     return {
       ok: result.body?.ok === true && result.body?.code === "GATEWAY_PROOF_OK",
       ...result
